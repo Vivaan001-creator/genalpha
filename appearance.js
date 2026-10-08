@@ -1,6 +1,6 @@
 /* =========================================================
    appearance.js — one-tap Light/Dark toggle for the whole
-   Student Desk app.
+   GenAlpha app.
 
    ANDROID APP CHANGE: this used to open a small dropdown with
    three choices (System / Light / Dark). That menu was also

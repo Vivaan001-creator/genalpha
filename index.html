@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Student Desk</title>
+<title>GenAlpha</title>
 <style>
   /* This page is the Android app's entry point — NOT a website
      homepage. It shows the brand for a moment (matching the
@@ -16,34 +16,26 @@
   *{ margin:0; padding:0; box-sizing:border-box; }
   html,body{ height:100%; }
   body{
-    background:#0e1326;
+    background:#ffffff;
     display:flex; align-items:center; justify-content:center;
     font-family:'Segoe UI', Arial, sans-serif;
     overflow:hidden;
   }
   .splash-logo{
-    width:132px; height:132px; border-radius:32px;
-    box-shadow:0 20px 50px rgba(0,0,0,.4);
-    animation:logoIn .7s cubic-bezier(.16,.84,.44,1) both;
+    width:220px; max-width:60vw; height:auto;
+    animation:logoIn .8s cubic-bezier(.16,.84,.44,1) both;
   }
   @keyframes logoIn{
-    0%{ opacity:0; transform:scale(.72); }
-    60%{ opacity:1; transform:scale(1.06); }
+    0%{ opacity:0; transform:scale(.7); }
+    60%{ opacity:1; transform:scale(1.05); }
     100%{ opacity:1; transform:scale(1); }
   }
-  .splash-name{
-    position:fixed; bottom:14%; left:0; right:0; text-align:center;
-    color:#f3ecd9; font-size:13px; letter-spacing:2px; text-transform:uppercase; font-weight:600;
-    opacity:0; animation:fadeIn .6s .35s ease both;
-  }
-  @keyframes fadeIn{ to{ opacity:.75; } }
-  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; } .splash-name{ opacity:.75; } }
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; } }
 </style>
 </head>
 <body>
 
-  <img class="splash-logo" src="logo.png" alt="Student Desk">
-  <div class="splash-name">Student Desk</div>
+  <img class="splash-logo" src="logo.png" alt="GenAlpha">
 
   <script>
     function routeToApp() {
@@ -55,7 +47,7 @@
       window.location.replace(dest);
     }
     // Give the entrance animation a moment to actually be seen —
-    // this is the "icon with animation" moment on every app open.
+    // this is the "logo with animation" moment on every app open.
     setTimeout(routeToApp, 900);
   </script>
 

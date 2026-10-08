@@ -1,6 +1,6 @@
 /* =========================================================
    bottom-nav.js — floating 5-icon bottom tab bar for the
-   Android app shell (Student Desk redesign).
+   Android app shell (GenAlpha redesign).
 
    TWO MODES:
 

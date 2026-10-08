@@ -1,6 +1,6 @@
 {
-  "appId": "com.vivaan.studentdesk",
-  "appName": "Student Desk",
+  "appId": "com.vivaan.genalpha",
+  "appName": "GenAlpha",
   "webDir": "www",
   "bundledWebRuntime": false,
   "android": {
@@ -14,7 +14,7 @@
       "launchShowDuration": 1200,
       "launchAutoHide": true,
       "launchFadeOutDuration": 300,
-      "backgroundColor": "#0e1326",
+      "backgroundColor": "#ffffff",
       "androidSplashResourceName": "splash",
       "androidScaleType": "CENTER_CROP",
       "showSpinner": false,

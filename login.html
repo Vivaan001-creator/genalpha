@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script src="appearance.js"></script>
-<title>Log In - Student Desk</title>
+<title>Log In - GenAlpha</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -45,24 +45,12 @@
     opacity:var(--star-op); animation:twinkle 3.6s ease-in-out infinite; transition:opacity .5s var(--ease); }
   @keyframes twinkle{ 0%,100%{opacity:calc(var(--star-op)*.15);} 50%{opacity:var(--star-op);} }
 
-  /* ============ ILLUSTRATION: teacher + students ============ */
-  .scene-wrap{ width:230px; max-width:72vw; margin-bottom:8px;
+  /* ============ BRAND LOGO ============ */
+  .scene-wrap{ width:190px; max-width:56vw; margin-bottom:10px;
     animation:dropIn .8s var(--ease) both, sceneBob 5.5s ease-in-out 1s infinite; }
-  @keyframes dropIn{ from{opacity:0; transform:translateY(-16px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes dropIn{ from{opacity:0; transform:translateY(-16px) scale(.85);} to{opacity:1; transform:translateY(0) scale(1);} }
   @keyframes sceneBob{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-6px);} }
-  .scene-svg{ display:block; width:100%; height:auto; filter:drop-shadow(0 14px 18px rgba(0,0,0,.25)); }
-  .chalk-mark{ stroke-dasharray:60; stroke-dashoffset:60; animation:writeIn 2.6s var(--ease) .6s infinite; }
-  @keyframes writeIn{ 0%{stroke-dashoffset:60;} 35%{stroke-dashoffset:0;} 75%{stroke-dashoffset:0;} 100%{stroke-dashoffset:0; opacity:0;} }
-  .pointer-arm{ transform-origin:203px 128px; animation:pointBeat 2.6s ease-in-out infinite; }
-  @keyframes pointBeat{ 0%,100%{transform:rotate(0deg);} 50%{transform:rotate(-10deg);} }
-  .clock-hand{ transform-origin:222px 16px; animation:tick 6s linear infinite; }
-  @keyframes tick{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
-  .sparkle{ animation:twinkle 2.2s ease-in-out infinite; }
-  .sparkle.s2{ animation-delay:.7s; }
-  .sparkle.s3{ animation-delay:1.3s; }
-
-  .brand-title{ font-size:clamp(26px, 6vw, 34px); text-align:center; line-height:1.15; margin-top:4px; animation:fadeUp .7s .2s var(--ease) both; }
-  .brand-title span{ color:var(--amber); }
+  .scene-logo{ display:block; width:100%; height:auto; filter:drop-shadow(0 14px 18px rgba(0,0,0,.2)); }
   @keyframes fadeUp{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
 
   .tagline{ font-size:14.5px; color:var(--ink-soft); text-align:center; max-width:280px; margin:10px 0 30px;
@@ -125,111 +113,9 @@
 <div class="star" style="top:26%; left:6%;  animation-delay:1.8s;"></div>
 
 <div class="scene-wrap">
-  <svg class="scene-svg" viewBox="0 0 300 230" aria-hidden="true">
-    <!-- soft decorative blob behind the scene -->
-    <path d="M195,18 Q245,-2 272,28 Q298,54 278,86 Q296,108 270,116 Q244,110 224,90 Q202,66 197,42 Z" fill="var(--teal)" opacity=".16"/>
-    <!-- floor shadow -->
-    <ellipse cx="150" cy="222" rx="145" ry="12" fill="var(--blue)" opacity=".12"/>
-
-    <!-- potted plant -->
-    <path d="M27,176 L47,176 L51,190 L23,190 Z" fill="#8a6a3f"/>
-    <line x1="30" y1="190" x2="27" y2="204" stroke="#8a6a3f" stroke-width="3" stroke-linecap="round"/>
-    <line x1="44" y1="190" x2="47" y2="204" stroke="#8a6a3f" stroke-width="3" stroke-linecap="round"/>
-    <path d="M30,160 L46,160 L43,178 L33,178 Z" fill="var(--coral)"/>
-    <ellipse cx="29" cy="145" rx="6" ry="14" fill="var(--teal)" transform="rotate(-25 29 145)"/>
-    <ellipse cx="39" cy="137" rx="6.5" ry="16" fill="var(--teal)" transform="rotate(4 39 137)"/>
-    <ellipse cx="49" cy="146" rx="6" ry="14" fill="var(--teal)" transform="rotate(30 49 146)"/>
-
-    <!-- wall clock -->
-    <line x1="140" y1="8" x2="140" y2="17" stroke="var(--amber-shadow)" stroke-width="4" stroke-linecap="round"/>
-    <circle cx="140" cy="29" r="16" fill="#fdf6e8" stroke="var(--blue)" stroke-width="4"/>
-    <line x1="140" y1="29" x2="140" y2="20" stroke="var(--navy-900)" stroke-width="2" stroke-linecap="round"/>
-    <g class="clock-hand"><line x1="140" y1="29" x2="149" y2="29" stroke="var(--amber)" stroke-width="2" stroke-linecap="round"/></g>
-    <circle cx="140" cy="29" r="1.8" fill="var(--amber)"/>
-
-    <!-- chalkboard -->
-    <rect x="65" y="24" width="170" height="105" rx="8" fill="#a9723f"/>
-    <rect x="72" y="31" width="156" height="91" rx="5" fill="#1f4d3d"/>
-    <line class="chalk-mark" x1="86" y1="52" x2="140" y2="52" stroke="#dfe9e3" stroke-width="4" stroke-linecap="round"/>
-    <line class="chalk-mark" x1="86" y1="66" x2="120" y2="66" stroke="#dfe9e3" stroke-width="4" stroke-linecap="round" opacity=".8" style="animation-delay:.9s;"/>
-    <rect x="86" y="98" width="20" height="14" rx="1" fill="#dfe9e3" opacity=".9"/>
-    <rect x="110" y="94" width="14" height="18" rx="1" fill="var(--brand-yellow)" opacity=".9"/>
-
-    <!-- desk -->
-    <rect x="10" y="168" width="150" height="10" rx="3" fill="#c98f4f"/>
-    <rect x="18" y="178" width="7" height="26" fill="#8a6a3f"/>
-    <rect x="142" y="178" width="7" height="26" fill="#8a6a3f"/>
-    <rect x="78" y="150" width="26" height="7" rx="1" fill="var(--coral)"/>
-    <rect x="80" y="143" width="22" height="7" rx="1" fill="var(--teal)"/>
-    <rect x="82" y="136" width="18" height="7" rx="1" fill="var(--brand-yellow)"/>
-
-    <!-- chairs -->
-    <rect x="13" y="140" width="6" height="34" rx="2" fill="var(--blue)" opacity=".5"/>
-    <rect x="61" y="136" width="6" height="34" rx="2" fill="var(--blue)" opacity=".5"/>
-    <rect x="118" y="140" width="6" height="34" rx="2" fill="var(--blue)" opacity=".5"/>
-
-    <!-- student 1: curly hair, teal-green top -->
-    <path d="M12,168 Q12,148 28,148 Q44,148 44,168 Z" fill="var(--teal)"/>
-    <circle cx="28" cy="139" r="13" fill="#8a5a3c"/>
-    <circle cx="18" cy="131" r="5" fill="#1c1c1c"/><circle cx="24" cy="126" r="5.5" fill="#1c1c1c"/>
-    <circle cx="32" cy="125" r="5.5" fill="#1c1c1c"/><circle cx="38" cy="129" r="5" fill="#1c1c1c"/>
-    <circle cx="24" cy="141" r="1.4" fill="#241f14"/><circle cx="32" cy="141" r="1.4" fill="#241f14"/>
-    <path d="M23,146 Q28,150 33,146" stroke="#241f14" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-
-    <!-- student 2: dark swept hair, coral top -->
-    <path d="M60,168 Q60,144 76,144 Q92,144 92,168 Z" fill="var(--coral)"/>
-    <circle cx="76" cy="135" r="13" fill="#ffcf9d"/>
-    <path d="M62,131 Q76,113 90,131 Q86,120 76,118 Q66,120 62,131 Z" fill="#241f14"/>
-    <circle cx="72" cy="137" r="1.4" fill="#241f14"/><circle cx="80" cy="137" r="1.4" fill="#241f14"/>
-    <path d="M71,142 Q76,146 81,142" stroke="#241f14" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-
-    <!-- student 3: brown hair, yellow top -->
-    <path d="M116,168 Q116,144 132,144 Q148,144 148,168 Z" fill="var(--brand-yellow)"/>
-    <circle cx="132" cy="139" r="13" fill="#ffcf9d"/>
-    <path d="M119,135 Q132,120 145,135 Q141,124 132,123 Q123,124 119,135 Z" fill="#6b4a2f"/>
-    <circle cx="128" cy="141" r="1.4" fill="#241f14"/><circle cx="136" cy="141" r="1.4" fill="#241f14"/>
-    <path d="M127,146 Q132,150 137,146" stroke="#241f14" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-
-    <!-- teacher -->
-    <path d="M198,226 Q195,165 218,165 Q241,165 238,226 Z" fill="var(--navy-900)"/>
-    <ellipse cx="204" cy="226" rx="9" ry="5" fill="#5c2f22"/>
-    <ellipse cx="232" cy="226" rx="9" ry="5" fill="#5c2f22"/>
-    <path d="M200,165 Q197,122 218,122 Q239,122 236,165 Z" fill="#eef3fb"/>
-    <path d="M212,122 L218,132 L216,120 Z" fill="#d7e3f5"/>
-    <path d="M224,122 L218,132 L220,120 Z" fill="#d7e3f5"/>
-    <!-- static arm + book -->
-    <path d="M232,128 Q247,140 239,156" stroke="#eef3fb" stroke-width="10" stroke-linecap="round" fill="none"/>
-    <rect x="228" y="153" width="16" height="22" rx="2" fill="var(--coral)"/>
-    <line x1="236" y1="153" x2="236" y2="175" stroke="#a83f33" stroke-width="1.5"/>
-    <circle cx="238" cy="157" r="6" fill="#ffcf9d"/>
-    <!-- neck + head -->
-    <rect x="212" y="112" width="10" height="12" fill="#ffcf9d"/>
-    <circle cx="217" cy="100" r="15" fill="#ffcf9d"/>
-    <path d="M200,96 Q205,74 217,76 Q231,72 234,94 Q230,84 217,84 Q206,84 200,96 Z" fill="#241f14"/>
-    <circle cx="211" cy="101" r="1.6" fill="#241f14"/><circle cx="223" cy="101" r="1.6" fill="#241f14"/>
-    <path d="M209,107 Q217,113 225,107" stroke="#241f14" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    <!-- animated pointing arm + hand -->
-    <g class="pointer-arm">
-      <path d="M203,128 Q182,118 176,100" stroke="#eef3fb" stroke-width="10" stroke-linecap="round" fill="none"/>
-      <circle cx="176" cy="98" r="6" fill="#ffcf9d"/>
-    </g>
-
-    <!-- listening student standing beside the teacher -->
-    <path d="M262,226 Q260,192 275,192 Q290,192 288,226 Z" fill="var(--purple)"/>
-    <path d="M264,192 Q262,170 275,170 Q288,170 286,192 Z" fill="var(--teal)"/>
-    <circle cx="275" cy="161" r="12" fill="#ffcf9d"/>
-    <path d="M263,158 Q261,142 275,142 Q289,142 287,158 Q289,178 282,182 Q285,161 275,159 Q265,161 268,182 Q261,178 263,158 Z" fill="var(--amber-deep)"/>
-    <circle cx="271" cy="162" r="1.3" fill="#241f14"/><circle cx="279" cy="162" r="1.3" fill="#241f14"/>
-    <path d="M270,167 Q275,170 280,167" stroke="#241f14" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-
-    <!-- sparkles -->
-    <circle class="sparkle" cx="60" cy="24" r="2.2" fill="var(--amber)"/>
-    <circle class="sparkle s2" cx="248" cy="60" r="1.8" fill="var(--brand-yellow)"/>
-    <circle class="sparkle s3" cx="255" cy="132" r="1.6" fill="var(--amber)"/>
-  </svg>
+  <img class="scene-logo" src="logo.png" alt="GenAlpha">
 </div>
 
-<h1 class="brand-title">Student <span>Desk</span></h1>
 <p class="tagline">Ek jagah results, attendance, fees aur notices — sabke liye, aasaan tareeke se.</p>
 
 <button type="button" class="primary-btn" id="primaryLoginBtn">
