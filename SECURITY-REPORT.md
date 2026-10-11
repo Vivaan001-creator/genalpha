@@ -41,6 +41,7 @@ Until then, treat student data as readable by anyone technical, and do not store
 - Accessibility: every form control has a label, keyboard focus is always visible, browser pop-up alerts are replaced by on-page messages (success and error), teacher phone numbers and emails are tap-to-call and tap-to-email. Text contrast was checked automatically on every page in light and dark mode (empty-data state) and now passes. Fixed along the way: invisible text on form cards in dark mode, faint footer and bottom-nav labels, and an unreadable teacher signature in dark mode on the result page.
 - Style: button corners are no longer pill shaped, purple gradients in `admin.css` are solid colours, em dashes removed.
 - Images: login logo reduced from 396 KB to 178 KB. Originals are `logo-original.png` and `favicon-original.png` (delete them from the repo if you do not need them online).
+- Mobile (admin): the dashboard had its page padding wiped out by a later CSS rule, so everything touched the screen edges; fixed, with a 2x2 stats grid. List cards no longer overflow their box, class teacher and payment history cells are tidy. All 19 admin pages were run against realistic mock data at 360 and 320 px wide, light and dark, with a check that no element sticks out past the screen.
 - Mobile: two-column forms stack on phones. All 40 pages tested at 360 px wide with no sideways scrolling (logged-in pages tested with empty data).
 
 ## 4. What you must do (in this order)

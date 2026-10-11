@@ -3588,14 +3588,14 @@ async function searchFeeStudent() {
           `;
         const noteText = trusted
           ? escapeHtmlAdmin(pay.note || "-")
-          : `${escapeHtmlAdmin(pay.note || "-")} <span class="status-inactive">Pending Verification</span>${actionCell}`;
+          : `<div class="note-stack"><span>${escapeHtmlAdmin(pay.note || "-")}</span> <span class="status-inactive">Pending Verification</span>${actionCell}</div>`;
 
         paymentRowsHtml += `
           <tr>
             <td data-label="Date">${dateText}</td>
             <td data-label="Amount">₹${pay.amount}</td>
             <td data-label="Mode">${escapeHtmlAdmin(pay.mode || "-")}</td>
-            <td data-label="Note">${noteText}</td>
+            <td data-label="Note" class="note-cell">${noteText}</td>
           </tr>
         `;
       });

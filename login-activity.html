@@ -142,7 +142,7 @@
   @media (max-width:760px){
     table.classes-table thead{ display:none; }
     table.classes-table, table.classes-table tbody, table.classes-table tr, table.classes-table td{ display:block; width:100%; }
-    table.classes-table tr{ margin:10px; border:1px solid rgba(36,31,20,.08); border-radius:14px; padding:6px 14px; background:var(--surface-card); }
+    table.classes-table tr{ box-sizing:border-box; margin:10px 0; border:1px solid rgba(36,31,20,.08); border-radius:14px; padding:6px 14px; background:var(--surface-card); }
     table.classes-table td{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:9px 0; border:none; border-bottom:1px solid rgba(36,31,20,.05); text-align:right; }
     table.classes-table td:last-child{ border-bottom:none; }
     table.classes-table td::before{ content:attr(data-label); font-weight:600; color:var(--ink-soft); font-size:11px; text-align:left; }

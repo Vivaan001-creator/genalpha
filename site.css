@@ -38,3 +38,35 @@ html:not([data-theme="dark"]) .logout-btn{ color:#b3362a; }
 html[data-theme="dark"] .logout-btn{ color:#ff7b6e; }
 .amber-link{ color:#ffb347; }
 html:not([data-theme="dark"]) .amber-link{ color:#a8510f; }
+
+/* Phones: lists that turn into cards should not sit inside a second bordered box. */
+@media (max-width:760px){
+  html body .table-wrap{ border:0; background:transparent; box-shadow:none; overflow:visible; padding:0; }
+}
+
+@media (max-width:760px){
+  html body .table-wrapper{ border:0; background:transparent; box-shadow:none; overflow:visible; padding:0; }
+  /* Cells that hold a name plus a second line (for example teacher and email). */
+  html body table.classes-table td.teacher-cell{ display:grid; grid-template-columns:auto 1fr; column-gap:14px; align-items:start; }
+  html body table.classes-table td.teacher-cell::before{ grid-row:1 / span 2; }
+  html body table.classes-table td.teacher-cell > *{ grid-column:2; text-align:right; min-width:0; overflow-wrap:anywhere; }
+}
+
+/* Phones: big cards lose some side padding so lists and forms get more room. */
+@media (max-width:560px){
+  html body .classes-card{ padding:14px 12px; border-radius:20px; }
+  html body .form-card{ padding:18px 14px; border-radius:20px; }
+  html body .quick-tips-box{ padding:18px 16px; }
+  html body .profile-hero{ padding:20px 16px; }
+  html body .classes-card-toolbar{ margin-bottom:12px; }
+}
+
+/* Payment history: note, status badge and Verify/Reject buttons stay together. */
+.note-stack{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; min-width:0; }
+.note-stack .action-btns{ flex-basis:100%; }
+@media (max-width:760px){
+  html body table.classes-table td.note-cell{ display:grid; grid-template-columns:auto 1fr; column-gap:14px; align-items:start; }
+  html body table.classes-table td.note-cell::before{ grid-row:1; }
+  html body table.classes-table td.note-cell > .note-stack{ grid-column:2; flex-direction:column; align-items:flex-end; text-align:right; }
+  html body .note-stack .action-btns{ justify-content:flex-end; flex-basis:auto; }
+}
