@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.workers.dev; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#090c18">
+<title>NEXORA AI</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="nexora.css">
+</head>
+<body>
+<div class="app">
+  <aside id="side" aria-label="Chat history">
+    <div class="side-top">
+      <button id="newBtn" class="btn primary"><span data-ic="plus"></span>New chat</button>
+      <button id="closeSide" class="icon only-mobile" aria-label="Close chat history" data-ic="x"></button>
+    </div>
+    <input id="search" type="search" placeholder="Search chats" aria-label="Search chats" autocomplete="off">
+    <ul id="list"></ul>
+    <div class="side-bot">
+      <button id="settingsBtn" class="btn"><span data-ic="gear"></span>Settings</button>
+      <a class="btn" href="more.html">Back to GenAlpha</a>
+    </div>
+  </aside>
+  <div id="scrim"></div>
+  <main>
+    <header>
+      <button id="menuBtn" class="icon only-mobile" aria-label="Open chat history" data-ic="menu"></button>
+      <h1 id="title">NEXORA</h1>
+      <select id="model" aria-label="Model" hidden></select>
+      <button id="exportBtn" class="icon" aria-label="Export this chat as Markdown" data-ic="down"></button>
+    </header>
+    <div id="banner" role="status" hidden></div>
+    <section id="log" aria-live="polite" aria-label="Conversation"></section>
+    <form id="form" autocomplete="off">
+      <textarea id="input" rows="1" maxlength="8000" placeholder="Message NEXORA" aria-label="Message"></textarea>
+      <button id="send" class="send" type="submit" aria-label="Send message"></button>
+    </form>
+  </main>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <form method="dialog" id="setForm">
+    <h2 id="dlgTitle">Settings</h2>
+    <label>Assistant name<input id="sName" maxlength="30"></label>
+    <label>Instructions<textarea id="sSys" rows="6" maxlength="4000"></textarea></label>
+    <label>Theme<select id="sTheme"><option value="dark">Dark</option><option value="light">Light</option></select></label>
+    <label class="row"><input type="checkbox" id="sSave"> Save chats on this device</label>
+    <p class="hint">Chats stay in this browser only. They are not synced to other devices.</p>
+    <div class="dlg-actions">
+      <button type="button" id="resetSys" class="btn">Reset instructions</button>
+      <button type="button" id="clearAll" class="btn danger">Delete all chats</button>
+      <button value="ok" class="btn primary">Done</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="nexora-config.js"></script>
+<script src="nexora-md.js"></script>
+<script src="nexora.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+name = "nexora-api"
+main = "nexora-worker.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+# Comma-separated list of sites allowed to call this API.
+ALLOWED_ORIGIN = "https://vivaan001-creator.github.io"
+# Models shown in the selector. Only models your API key can use should be listed.
+MODELS = "claude-sonnet-5-5,claude-haiku-5-5"
+# The API key is NOT here. Set it with: npx wrangler secret put ANTHROPIC_API_KEY
