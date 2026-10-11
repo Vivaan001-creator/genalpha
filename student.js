@@ -73,7 +73,7 @@ async function studentLogin() {
   const dob = dobInput.value.trim();
 
   if (!roll || !dob) {
-    alert("Roll Number aur Date of Birth dono bharein.");
+    alert("Please enter both Roll Number and Date of Birth.");
     return;
   }
 
@@ -81,7 +81,7 @@ async function studentLogin() {
     const studentSnap = await getDoc(doc(db, "students", roll));
 
     if (!studentSnap.exists()) {
-      alert("Yeh Roll Number system mein nahi mila.");
+      alert("This Roll Number was not found in the system.");
       return;
     }
 
@@ -90,7 +90,7 @@ async function studentLogin() {
     const enteredDob = toISODate(dob);
 
     if (!storedDob || storedDob !== enteredDob) {
-      alert("Date of Birth match nahi hui. Kripya dobara try karein.");
+      alert("Date of Birth does not match. Please try again.");
       return;
     }
 
@@ -339,14 +339,14 @@ async function loadStudentResult(roll, student, month) {
   if (resultCommentBoxEl) resultCommentBoxEl.textContent = "";
 
   if (student.publishStatus !== "published") {
-    showEmpty(emptyMsg, "Aapka result abhi school dwara publish nahi kiya gaya hai.");
+    showEmpty(emptyMsg, "Your result has not been published yet.");
     return;
   }
 
   const snap = await getDoc(doc(db, "students", roll, "results", month));
 
   if (!snap.exists()) {
-    showEmpty(emptyMsg, month + " ke liye result abhi upload nahi hua hai.");
+    showEmpty(emptyMsg, "The result for " + month + " has not been uploaded yet.");
     return;
   }
 
@@ -466,7 +466,7 @@ async function loadStudentAttendance(roll, month) {
       .sort((a, b) => (a.id < b.id ? 1 : -1)); // newest first
 
     if (docsInMonth.length === 0) {
-      showEmpty(emptyMsg, month + " ke liye abhi tak attendance record nahi hai.");
+      showEmpty(emptyMsg, "No attendance record for " + month + " yet.");
       return;
     }
 
@@ -525,7 +525,7 @@ async function loadStudentAttendance(roll, month) {
 
   } catch (error) {
     console.error(error);
-    showEmpty(emptyMsg, "Attendance load nahi ho paayi: " + error.message);
+    showEmpty(emptyMsg, "Could not load attendance: " + error.message);
   }
 }
 
@@ -547,7 +547,7 @@ async function loadStudentNotices() {
     const snap = await getDocs(noticesQuery);
 
     if (snap.empty) {
-      showEmpty(emptyMsg, "Abhi tak koi notice nahi hai.");
+      showEmpty(emptyMsg, "No notices yet.");
       return;
     }
 
@@ -577,7 +577,7 @@ async function loadStudentNotices() {
 
   } catch (error) {
     console.error(error);
-    showEmpty(emptyMsg, "Notices load nahi ho paayi: " + error.message);
+    showEmpty(emptyMsg, "Could not load notices: " + error.message);
   }
 }
 
@@ -647,12 +647,12 @@ async function loadStudentFeeStatus(roll, student) {
     `;
 
     if (tableBody) {
-      tableBody.innerHTML = rows || `<tr><td colspan="4">Abhi koi payment record nahi hai.</td></tr>`;
+      tableBody.innerHTML = rows || `<tr><td colspan="4">No payment records yet.</td></tr>`;
     }
 
   } catch (error) {
     console.error(error);
-    if (emptyMsg) showEmpty(emptyMsg, "Fee status load nahi ho paayi: " + error.message);
+    if (emptyMsg) showEmpty(emptyMsg, "Could not load fee status: " + error.message);
   }
 }
 

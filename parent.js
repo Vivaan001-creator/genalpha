@@ -115,7 +115,7 @@ async function parentLogin() {
   const contact = contactInput.value.trim();
 
   if (!roll || !contact) {
-    alert("Roll Number aur Mobile Number dono bharein.");
+    alert("Please enter both Roll Number and Mobile Number.");
     return;
   }
 
@@ -123,7 +123,7 @@ async function parentLogin() {
     const studentSnap = await getDoc(doc(db, "students", roll));
 
     if (!studentSnap.exists()) {
-      alert("Yeh Roll Number system mein nahi mila.");
+      alert("This Roll Number was not found in the system.");
       return;
     }
 
@@ -131,12 +131,12 @@ async function parentLogin() {
     const storedContact = String(student.contactNumber || "").trim();
 
     if (!storedContact) {
-      alert("Is Roll Number ke liye koi mobile number register nahi hai. Kripya school office se sampark karein.");
+      alert("No mobile number is registered for this Roll Number. Please contact the tuition office.");
       return;
     }
 
     if (storedContact !== contact) {
-      alert("Mobile Number match nahi hua. Kripya dobara try karein.");
+      alert("Mobile number does not match. Please try again.");
       return;
     }
 
@@ -205,7 +205,7 @@ async function loadParentDashboard() {
   );
 
   if (childSnap.empty) {
-    alert("Koi student record nahi mila. Kripya dobara login karein.");
+    alert("No student record found. Please log in again.");
     parentLogout();
     return;
   }
@@ -297,7 +297,7 @@ async function loadChildAttendance(roll, month) {
   try {
     // BUG FIX: a where()+where()+orderBy() range query on documentId()
     // was asking Firestore for a composite index that doesn't exist in
-    // this project ("Attendance load nahi ho paayi: The query requires
+    // this project ("Could not load attendance: The query requires
     // an index..."). A single student's attendance subcollection is
     // tiny (one doc per school day), so instead of requiring an index,
     // fetch the whole subcollection once and filter/sort in JS.
@@ -308,7 +308,7 @@ async function loadChildAttendance(roll, month) {
       .sort((a, b) => (a.id < b.id ? 1 : a.id > b.id ? -1 : 0));
 
     if (docsInRange.length === 0) {
-      showEmpty(emptyMsg, month + " ke liye abhi tak attendance record nahi hai.");
+      showEmpty(emptyMsg, "No attendance record for " + month + " yet.");
       return;
     }
 
@@ -367,7 +367,7 @@ async function loadChildAttendance(roll, month) {
 
   } catch (error) {
     console.error(error);
-    showEmpty(emptyMsg, "Attendance load nahi ho paayi: " + error.message);
+    showEmpty(emptyMsg, "Could not load attendance: " + error.message);
   }
 }
 
@@ -388,7 +388,7 @@ async function loadChildHomework(child) {
   if (emptyMsg) emptyMsg.style.display = "none";
 
   if (!child.class) {
-    showEmpty(emptyMsg, "Class set nahi hai, isliye homework nahi dikhaya ja sakta.");
+    showEmpty(emptyMsg, "Class is not set, so homework cannot be shown.");
     return;
   }
 
@@ -406,7 +406,7 @@ async function loadChildHomework(child) {
       });
 
     if (matching.length === 0) {
-      showEmpty(emptyMsg, "Abhi tak koi homework nahi diya gaya.");
+      showEmpty(emptyMsg, "No homework has been given yet.");
       return;
     }
 
@@ -425,7 +425,7 @@ async function loadChildHomework(child) {
 
   } catch (error) {
     console.error(error);
-    showEmpty(emptyMsg, "Homework load nahi ho paaya: " + error.message);
+    showEmpty(emptyMsg, "Could not load homework: " + error.message);
   }
 }
 
@@ -448,7 +448,7 @@ async function loadNotices() {
     const snap = await getDocs(noticesQuery);
 
     if (snap.empty) {
-      showEmpty(emptyMsg, "Abhi tak koi notice nahi hai.");
+      showEmpty(emptyMsg, "No notices yet.");
       return;
     }
 
@@ -478,7 +478,7 @@ async function loadNotices() {
 
   } catch (error) {
     console.error(error);
-    showEmpty(emptyMsg, "Notices load nahi ho paayi: " + error.message);
+    showEmpty(emptyMsg, "Could not load notices: " + error.message);
   }
 }
 
@@ -588,7 +588,7 @@ async function loadChildFeeStatus(roll, child) {
       } else if (periods.length === 0) {
         // No admission date on file - can't anchor a month-wise
         // breakdown, so just note that plainly instead of guessing.
-        dueBox.innerHTML = `<p class="result-empty-msg">Admission Date set nahi hai, isliye month-wise due nahi dikhaya ja sakta. School office se sampark karein.</p>`;
+        dueBox.innerHTML = `<p class="result-empty-msg">Admission date is not set, so month-wise dues cannot be shown. Please contact the tuition office.</p>`;
       } else {
         dueBox.innerHTML = periodsWithStatus.map((p) => {
           if (p.status === "paid") {
@@ -635,12 +635,12 @@ async function loadChildFeeStatus(roll, child) {
     }
 
     if (tableBody) {
-      tableBody.innerHTML = rows || `<tr><td colspan="4">Abhi koi payment record nahi hai.</td></tr>`;
+      tableBody.innerHTML = rows || `<tr><td colspan="4">No payment records yet.</td></tr>`;
     }
 
   } catch (error) {
     console.error(error);
-    if (emptyMsg) showEmpty(emptyMsg, "Fee status load nahi ho paayi: " + error.message);
+    if (emptyMsg) showEmpty(emptyMsg, "Could not load fee status: " + error.message);
   }
 }
 

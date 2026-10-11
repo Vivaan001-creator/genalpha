@@ -104,7 +104,7 @@ async function teacherLogin() {
 
     if (snap.empty) {
       await signOut(auth);
-      alert("Ye account Teacher ke roop mein register nahi hai. Admin se sampark karein.");
+      alert("This account is not registered as a teacher. Please contact the admin.");
       return;
     }
 
@@ -204,7 +204,7 @@ async function teacherChangePassword() {
 
     const email = snap.data().email;
     await sendPasswordResetEmail(auth, email);
-    alert("Password reset link bhej diya gaya hai: " + email);
+    alert("Password reset link sent to: " + email);
 
   } catch (error) {
     alert(error.message);
@@ -256,7 +256,7 @@ async function loadTeacherDashboard() {
       const classSnap = await getDocs(classQuery);
 
       if (classSnap.empty) {
-        classBox.innerHTML = `<p class="no-class-msg">Abhi koi class assign nahi hui hai - Admin se class assignment ke liye sampark karein.</p>`;
+        classBox.innerHTML = `<p class="no-class-msg">No class assigned yet. Contact the admin for class assignment.</p>`;
       } else {
         classBox.innerHTML = classSnap.docs.map((d) => {
           const c = d.data();
@@ -420,7 +420,7 @@ async function loadMyStudents() {
   const ctx = await getMyContext();
 
   if (!ctx || !ctx.myClasses || ctx.myClasses.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="5">Aapko abhi tak koi class assign nahi hui. Admin se sampark karein.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5">No class has been assigned to you yet. Please contact the admin.</td></tr>`;
     showEmptyClassNote("noClassMsgStudents");
     return;
   }
@@ -432,7 +432,7 @@ async function loadMyStudents() {
   const studentDocs = await getStudentsInClasses(classIds);
 
   if (studentDocs.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="5">Aapki classes mein abhi koi student nahi hai.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5">There are no students in your classes yet.</td></tr>`;
     return;
   }
 
@@ -501,7 +501,7 @@ async function loadMarksPage() {
   const ctx = await getMyContext();
 
   if (!ctx || !ctx.myClasses || ctx.myClasses.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="4">Aapko abhi tak koi class assign nahi hui.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="4">No class has been assigned to you yet.</td></tr>`;
     showEmptyClassNote("noClassMsgMarks");
     return;
   }
@@ -515,7 +515,7 @@ async function loadMarksPage() {
   tableBody.innerHTML = "";
 
   if (studentDocs.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="4">Aapki classes mein koi student nahi hai.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="4">There are no students in your classes.</td></tr>`;
     return;
   }
 
@@ -797,7 +797,7 @@ async function renderAttendanceList(date) {
   const ctx = await getMyContext();
 
   if (!ctx || !ctx.myClasses || ctx.myClasses.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="4">Aapko abhi tak koi class assign nahi hui.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="4">No class has been assigned to you yet.</td></tr>`;
     showEmptyClassNote("noClassMsgAttendance");
     return;
   }
@@ -808,7 +808,7 @@ async function renderAttendanceList(date) {
   const studentDocs = await getStudentsInClasses(classIds);
 
   if (studentDocs.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="4">Aapki classes mein koi student nahi hai.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="4">There are no students in your classes.</td></tr>`;
     return;
   }
 
@@ -861,7 +861,7 @@ async function saveAttendance() {
   const date = document.getElementById("attendanceDate").value;
 
   if (!date) {
-    alert("Pehle date select karein.");
+    alert("Select a date first.");
     return;
   }
 
@@ -940,7 +940,7 @@ async function loadHomeworkPage() {
     } else {
       const opt = document.createElement("option");
       opt.value = "";
-      opt.textContent = "Koi class assign nahi hai";
+      opt.textContent = "No class assigned";
       classSelect.appendChild(opt);
       refreshSubjectsFor(null);
     }
@@ -981,7 +981,7 @@ async function loadHomeworkList() {
   const ctx = await getMyContext();
 
   if (!ctx || !ctx.myClasses || ctx.myClasses.length === 0) {
-    list.innerHTML = `<p class="result-empty-msg">Aapko abhi tak koi class assign nahi hui.</p>`;
+    list.innerHTML = `<p class="result-empty-msg">No class has been assigned to you yet.</p>`;
     return;
   }
 
@@ -999,7 +999,7 @@ async function loadHomeworkList() {
   });
 
   if (hwDocs.length === 0) {
-    list.innerHTML = `<p class="result-empty-msg">Abhi tak koi homework nahi diya gaya.</p>`;
+    list.innerHTML = `<p class="result-empty-msg">No homework has been given yet.</p>`;
     return;
   }
 
@@ -1041,14 +1041,14 @@ async function addHomework() {
   const dueDate = document.getElementById("hwDueDate").value;
 
   if (!subject || !title || !dueDate) {
-    alert("Please fill Subject, Title aur Due Date.");
+    alert("Please fill Subject, Title and Due Date.");
     return;
   }
 
   const ctx = await getMyContext();
 
   if (!ctx || !ctx.myClasses || ctx.myClasses.length === 0) {
-    alert("Aapko abhi tak koi class assign nahi hui.");
+    alert("No class has been assigned to you yet.");
     return;
   }
 
@@ -1065,7 +1065,7 @@ async function addHomework() {
   }
 
   if (!targetClass) {
-    alert("Aap multiple classes ke teacher hain - pehle yeh batayein ki yeh homework kis class ke liye hai.");
+    alert("You teach more than one class. Please choose which class this homework is for.");
     return;
   }
 
@@ -1101,7 +1101,7 @@ window.addHomework = addHomework;
 
 async function deleteHomework(id) {
 
-  const confirmDelete = confirm("Yeh homework delete karna hai?");
+  const confirmDelete = confirm("Delete this homework?");
   if (!confirmDelete) return;
 
   try {

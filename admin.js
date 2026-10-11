@@ -276,7 +276,7 @@ async function loadStudentTable() {
 
     if (snapshot.empty) {
 
-        tableBody.innerHTML = `<tr><td colspan="5">Abhi tak koi student add nahi hua hai. "Add New Student" par click karke shuru karein.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="5">No students added yet. Click "Add New Student" to get started.</td></tr>`;
 
     } else {
 
@@ -1197,7 +1197,7 @@ async function addTeacher(){
     }
 
     if (teacherPassword.length < 6) {
-        alert("Password kam se kam 6 characters ka hona chahiye.");
+        alert("Password must be at least 6 characters long.");
         return;
     }
 
@@ -1211,7 +1211,7 @@ async function addTeacher(){
             authUid = await createTeacherLoginAccount(teacherEmail, teacherPassword);
         } catch (authError) {
             if (authError.code === "auth/email-already-in-use") {
-                alert("Yeh email pehle se kisi account mein registered hai.");
+                alert("This email is already registered to an account.");
                 return;
             }
             console.error("Could not create teacher login account:", authError);
@@ -1283,7 +1283,7 @@ document.getElementById("teacherGender")?.value || "",
             ...(authUid ? { authUid } : {})
         }, { merge: true });
 
-        alert("Teacher Added Successfully. Yeh teacher ab isi email/password se login kar sakta hai.");
+        alert("Teacher added successfully. They can now sign in with this email and password.");
 
         window.location.href="teachers.html";
 
@@ -1326,7 +1326,7 @@ async function loadTeacherTable(){
 
     if (snapshot.empty) {
 
-        teacherTable.innerHTML = `<tr><td colspan="6">Abhi tak koi teacher add nahi hua hai. "Add New Teacher" par click karke shuru karein.</td></tr>`;
+        teacherTable.innerHTML = `<tr><td colspan="6">No teachers added yet. Click "Add New Teacher" to get started.</td></tr>`;
 
     } else {
 
@@ -2143,7 +2143,7 @@ async function changeTeacherPassword() {
     }
     const email = snap.data().email;
     await sendPasswordResetEmail(auth, email);
-    alert("Password reset link bhej diya gaya hai: " + email);
+    alert("Password reset link sent to: " + email);
   } catch (error) {
     console.error(error);
     alert(error.message);
@@ -3219,7 +3219,7 @@ function renderGalleryGrid(rows) {
   if (!galleryGridBox) return;
 
   if (rows.length === 0) {
-    galleryGridBox.innerHTML = `<p class="no-class-msg">Abhi koi photo upload nahi hui. "Add Photo" par click karke shuru karein.</p>`;
+    galleryGridBox.innerHTML = `<p class="no-class-msg">No photos uploaded yet. Click "Add Photo" to get started.</p>`;
     return;
   }
 
@@ -3420,7 +3420,7 @@ function renderFeeClassRows(rows) {
   if (!feeClassesTableBody) return;
 
   if (rows.length === 0) {
-    feeClassesTableBody.innerHTML = `<tr><td colspan="4">Pehle "All Classes" page se classes add karein.</td></tr>`;
+    feeClassesTableBody.innerHTML = `<tr><td colspan="4">Add classes from the "All Classes" page first.</td></tr>`;
     return;
   }
 
@@ -3540,7 +3540,7 @@ async function searchFeeStudent() {
     const studentSnap = await getDoc(doc(db, "students", roll));
 
     if (!studentSnap.exists()) {
-      resultBox.innerHTML = `<p class="no-class-msg">Roll Number "${escapeHtmlAdmin(roll)}" ka koi student nahi mila.</p>`;
+      resultBox.innerHTML = `<p class="no-class-msg">No student found with Roll Number "${escapeHtmlAdmin(roll)}".</p>`;
       currentFeeStudentRoll = null;
       return;
     }
@@ -3561,7 +3561,7 @@ async function searchFeeStudent() {
     let paymentRowsHtml = "";
 
     if (paymentsSnap.empty) {
-      paymentRowsHtml = `<tr><td colspan="4">Abhi koi payment record nahi hai.</td></tr>`;
+      paymentRowsHtml = `<tr><td colspan="4">No payment records yet.</td></tr>`;
     } else {
       paymentsSnap.forEach((p) => {
         const pay = p.data();
@@ -3630,7 +3630,7 @@ async function searchFeeStudent() {
 
     let dueListHtml = "";
     if (feeAmount && periods.length === 0) {
-      dueListHtml = `<p class="no-class-msg">Admission Date set nahi hai, isliye month-wise due nahi dikhaya ja sakta. Edit Student se add karein.</p>`;
+      dueListHtml = `<p class="no-class-msg">Admission date is not set, so month-wise dues cannot be shown. Add it from Edit Student.</p>`;
     } else if (feeAmount && periodsWithStatus.length) {
       dueListHtml = `
         <h3 class="form-section-title" style="font-size:13.5px;margin-top:16px;">Month-wise Status</h3>
@@ -3796,7 +3796,7 @@ window.verifyPayment = verifyPayment;
 
 async function rejectPayment(roll, paymentId) {
 
-  const confirmReject = confirm("Yeh self-reported payment reject karke hata dein? Agar parent ne galat report kiya tha, toh 'Yes' karein. Yeh undo nahi ho sakta.");
+  const confirmReject = confirm("Reject and remove this self-reported payment? Choose 'Yes' if the parent reported it incorrectly. This cannot be undone.");
   if (!confirmReject) return;
 
   try {

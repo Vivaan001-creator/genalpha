@@ -9,7 +9,7 @@
   for (var i = 0; i < els.length; i++) els[i].textContent = y;
 
   var KEY = "genalphaPendingToast";
-  var ERROR_WORDS = /(error|fail|incorrect|invalid|wrong|cannot|can't|could not|not found|denied|too many|please|required|nahi|galat)/i;
+  var ERROR_WORDS = /(error|fail|incorrect|invalid|wrong|cannot|can't|could not|not found|denied|too many|please|required|galat)/i;
   var host = null, timer = null, lastText = "", lastAt = 0;
 
   function ensureHost() {

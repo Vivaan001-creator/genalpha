@@ -251,7 +251,7 @@ async function init() {
     studentSnap = await getDoc(doc(db, "students", roll));
   } catch (error) {
     console.error(error);
-    tableBody.innerHTML = `<tr><td colspan="5" class="empty-row">Data load nahi ho paaya: ${escapeHtml(error.message)}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5" class="empty-row">Could not load data: ${escapeHtml(error.message)}</td></tr>`;
     return;
   }
 
@@ -283,7 +283,7 @@ async function loadResult(month) {
   document.getElementById("comment").textContent = "-";
 
   if ((student.publishStatus || "unpublished") !== "published") {
-    tableBody.innerHTML = `<tr><td colspan="5" class="empty-row">Result abhi school dwara publish nahi kiya gaya hai.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5" class="empty-row">The result has not been published yet.</td></tr>`;
     return;
   }
 
@@ -292,12 +292,12 @@ async function loadResult(month) {
     resultSnap = await getDoc(doc(db, "students", roll, "results", month));
   } catch (error) {
     console.error(error);
-    tableBody.innerHTML = `<tr><td colspan="5" class="empty-row">Result load nahi ho paaya: ${escapeHtml(error.message)}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5" class="empty-row">Could not load result: ${escapeHtml(error.message)}</td></tr>`;
     return;
   }
 
   if (!resultSnap.exists()) {
-    tableBody.innerHTML = `<tr><td colspan="5" class="empty-row">${escapeHtml(month)} ke liye result abhi upload nahi hua hai.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5" class="empty-row">The result for ${escapeHtml(month)} has not been uploaded yet.</td></tr>`;
     return;
   }
 
@@ -321,7 +321,7 @@ async function loadResult(month) {
       );
 
   if (subjects.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="5" class="empty-row">${escapeHtml(month)} ke liye koi subject marks nahi mile.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5" class="empty-row">No subject marks found for ${escapeHtml(month)}.</td></tr>`;
     return;
   }
 

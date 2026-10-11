@@ -119,7 +119,7 @@
       <button class="header-icon-btn" onclick="window.location.href='teacher-dashboard.html'" aria-label="Back"><i class="fa-solid fa-arrow-left"></i></button>
       <div>
         <h1>My Students</h1>
-        <p>Enrolled students ki list</p>
+        <p>List of enrolled students</p>
       </div>
     </div>
     <div class="header-actions">
@@ -131,14 +131,14 @@
     <main class="content classes-page">
       <div class="empty-state-note" id="noClassMsgStudents" style="display:none;">
         <i class="fa-solid fa-circle-info"></i>
-        <span>Aapko abhi tak koi class assign nahi hui hai. Admin se class-teacher assignment ke liye sampark karein.</span>
+        <span>No class has been assigned to you yet. Contact the admin about class-teacher assignment.</span>
       </div>
 
       <div class="classes-card">
         <div class="classes-card-toolbar">
           <div class="search-box-wrap">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="searchMyStudent" placeholder="Roll no. ya naam se search karein" oninput="searchMyStudents()" aria-label="Search your students">
+            <input type="text" id="searchMyStudent" placeholder="Search by roll no. or name" oninput="searchMyStudents()" aria-label="Search your students">
           </div>
         </div>
 
