@@ -1,5 +1,5 @@
-name = "nexora-api"
-main = "nexora-worker.js"
+name = "alpha-api"
+main = "alpha-worker.js"
 compatibility_date = "2025-01-01"
 
 [vars]
