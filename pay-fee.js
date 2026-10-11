@@ -89,7 +89,7 @@ async function init() {
   const feeFrequency = classData ? (classData.feeFrequency || "Monthly") : "Monthly";
 
   if (!feeAmount) {
-    renderState("fa-triangle-exclamation", "Is class ke liye fee abhi set nahi hui hai. School office se sampark karein.");
+    renderState("fa-triangle-exclamation", "Is class ke liye fee abhi set nahi hui hai. Tutor se sampark karein.");
     return;
   }
 
@@ -245,7 +245,7 @@ async function init() {
         <div class="pay-card">
           <div class="pay-icon" style="background:#d97706;"><i class="fa-solid fa-hourglass-half"></i></div>
           <div class="pay-period">Payment Reported</div>
-          <p class="pay-confirm-hint">${escapeHtml(period.label)} ka ₹${amountDue} payment report ho gaya hai. School admin verify karne ke baad yeh "Paid" dikhega. Dashboard par redirect kiya ja raha hai...</p>
+          <p class="pay-confirm-hint">${escapeHtml(period.label)} ka ₹${amountDue} payment report ho gaya hai. Admin verify karne ke baad yeh "Paid" dikhega. Dashboard par redirect kiya ja raha hai...</p>
         </div>
       `;
 
