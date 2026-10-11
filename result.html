@@ -96,6 +96,45 @@
     .profile-info{ grid-template-columns:1fr; }
     .result-card{ padding:24px 18px; }
   }
+
+  /* ---------- Phones: every part of the result fits the screen width ---------- */
+  @media screen and (max-width:560px){
+    .result-page{ padding:14px 12px 40px; }
+    .result-header{ gap:12px; margin-bottom:16px; }
+    .result-header-text{ width:100%; }
+    .result-header-actions{ width:100%; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .result-header-actions button{ width:100%; justify-content:center; min-height:44px; padding:10px 8px; }
+    .result-card{ padding:18px 14px; border-radius:18px; }
+
+    .profile-row{ gap:12px; padding-bottom:16px; margin-bottom:18px; }
+    .profile-avatar{ width:48px; height:48px; font-size:20px; }
+    .profile-info{ min-width:0; width:100%; flex-basis:100%; gap:0; }
+    .profile-info p{ display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid rgba(36,31,20,.07); text-align:right; }
+    .profile-info p:last-child{ border-bottom:0; }
+    .profile-info p strong{ text-align:left; flex-shrink:0; }
+    .profile-info p span{ min-width:0; overflow-wrap:anywhere; }
+
+    /* Marks table becomes one card per subject */
+    .table-wrap{ overflow:visible; border:0; border-radius:0; }
+    table.marks-table, table.marks-table tbody{ display:block; width:100%; }
+    table.marks-table thead{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+    table.marks-table tr{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px 8px; background:var(--paper); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:10px; }
+    table.marks-table td{ display:block; padding:0; border:0; min-width:0; font-size:14px; font-weight:600; }
+    table.marks-table td:nth-child(1){ grid-column:1 / 3; grid-row:1; font-size:15px; overflow-wrap:anywhere; }
+    table.marks-table td:nth-child(5){ grid-column:3; grid-row:1; justify-self:end; align-self:start; }
+    table.marks-table td[data-label]:nth-child(n+2):nth-child(-n+4)::before{
+      content:attr(data-label); display:block; font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; color:var(--ink-soft); margin-bottom:2px; }
+    table.marks-table td.empty-row{ grid-column:1 / -1; text-align:center; font-weight:400; font-size:13px; padding:8px 0 !important; }
+
+    .summary-grid{ grid-template-columns:1fr 1fr; gap:10px; }
+    .summary-card{ padding:14px 8px; }
+    .summary-value{ font-size:17px; overflow-wrap:anywhere; }
+    .comment-box{ padding:14px; }
+    .signature-mark{ font-size:22px; }
+  }
+  @media screen and (max-width:340px){
+    .result-header-actions{ grid-template-columns:1fr; }
+  }
   @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
 </style>
 </head>
