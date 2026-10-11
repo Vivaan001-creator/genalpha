@@ -26,10 +26,10 @@ function escapeHtml(str) {
 function buildUpiLink({ upiId, payeeName, amount, note }) {
   const params = new URLSearchParams({
     pa: upiId,
-    pn: payeeName || "School",
+    pn: payeeName || "Diksha Kumari",
     am: String(amount),
     cu: "INR",
-    tn: note || "School Fee"
+    tn: note || "Tuition fee"
   });
   return `upi://pay?${params.toString()}`;
 }
