@@ -37,7 +37,7 @@ Until then, treat student data as readable by anyone technical, and do not store
 - Every page: Content-Security-Policy meta tag, referrer policy, `noindex` on private pages, favicon, descriptions, consistent titles, legal links in the footer.
 - New: `privacy.html`, `terms.html`, `cookies.html`, `refund.html`, `404.html`.
 - `student-register.html`: removed the placeholder number (now uses 917970500551), added a parent/guardian consent checkbox, validation and inline messages.
-- Unused files renamed with an `unused-` prefix: `unused-assistant.html`, `unused-my-portfolio.html`, `unused-coming-soon.html`, `unused-home.js`. Nothing links to them. Because the project is now one flat folder, GitHub Pages WILL publish them, so delete them from the repo if you do not need them.
+- Unused files renamed with an `unused-` prefix: `unused-assistant.html`, `unused-coming-soon.html`, `unused-home.js`. Nothing links to them. Because the project is now one flat folder, GitHub Pages WILL publish them, so delete them from the repo if you do not need them.
 - Accessibility: every form control has a label, keyboard focus is always visible, browser pop-up alerts are replaced by on-page messages (success and error), teacher phone numbers and emails are tap-to-call and tap-to-email. Contrast was checked automatically on the login and legal pages only.
 - Style: button corners are no longer pill shaped, purple gradients in `admin.css` are solid colours, em dashes removed.
 - Images: login logo reduced from 396 KB to 178 KB. Originals are `logo-original.png` and `favicon-original.png` (delete them from the repo if you do not need them online).
