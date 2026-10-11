@@ -15,3 +15,26 @@ a[href^="tel:"], a[href^="mailto:"]{ color:inherit; text-decoration:underline; t
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
   outline:3px solid #8ab4ff !important; outline-offset:2px !important;
 }
+
+/* Footer text in light mode was too faint to read. */
+html:not([data-theme="dark"]) .footer,
+html:not([data-theme="dark"]) .footer a,
+html:not([data-theme="dark"]) .footer div,
+html:not([data-theme="dark"]) .legal-links a{ color:#5f5744; opacity:1; }
+
+/* Bottom navigation labels were too faint on the light theme. */
+html:not([data-theme="dark"]) .bn-item{ color:#5f5744; }
+html:not([data-theme="dark"]) .bn-item.bn-active{ color:#a8510f; }
+
+/* Dark theme: form cards stayed white while their text turned light. */
+html[data-theme="dark"] .form-card{ background:rgba(255,255,255,.045); border-color:rgba(255,255,255,.12); }
+
+/* Light theme: amber text on white or cream was too faint to read. */
+html:not([data-theme="dark"]) .form-section-title{ color:#a8510f; }
+html:not([data-theme="dark"]) .form-card a:not(.btn),
+html:not([data-theme="dark"]) .login-card a:not(.btn){ color:#a8510f; }
+html:not([data-theme="dark"]) .section-label{ color:#5f5744; }
+html:not([data-theme="dark"]) .logout-btn{ color:#b3362a; }
+html[data-theme="dark"] .logout-btn{ color:#ff7b6e; }
+.amber-link{ color:#ffb347; }
+html:not([data-theme="dark"]) .amber-link{ color:#a8510f; }

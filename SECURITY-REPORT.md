@@ -38,7 +38,7 @@ Until then, treat student data as readable by anyone technical, and do not store
 - New: `privacy.html`, `terms.html`, `cookies.html`, `refund.html`, `404.html`.
 - `student-register.html`: removed the placeholder number (now uses 917970500551), added a parent/guardian consent checkbox, validation and inline messages.
 - Unused files renamed with an `unused-` prefix: `unused-assistant.html`, `unused-coming-soon.html`, `unused-home.js`. Nothing links to them. Because the project is now one flat folder, GitHub Pages WILL publish them, so delete them from the repo if you do not need them.
-- Accessibility: every form control has a label, keyboard focus is always visible, browser pop-up alerts are replaced by on-page messages (success and error), teacher phone numbers and emails are tap-to-call and tap-to-email. Contrast was checked automatically on the login and legal pages only.
+- Accessibility: every form control has a label, keyboard focus is always visible, browser pop-up alerts are replaced by on-page messages (success and error), teacher phone numbers and emails are tap-to-call and tap-to-email. Text contrast was checked automatically on every page in light and dark mode (empty-data state) and now passes. Fixed along the way: invisible text on form cards in dark mode, faint footer and bottom-nav labels, and an unreadable teacher signature in dark mode on the result page.
 - Style: button corners are no longer pill shaped, purple gradients in `admin.css` are solid colours, em dashes removed.
 - Images: login logo reduced from 396 KB to 178 KB. Originals are `logo-original.png` and `favicon-original.png` (delete them from the repo if you do not need them online).
 - Mobile: two-column forms stack on phones. All 40 pages tested at 360 px wide with no sideways scrolling (logged-in pages tested with empty data).
@@ -66,7 +66,7 @@ I could not run the rules in the Firebase emulator here. Step 5 is not optional.
 - Rate limiting: there is none on the student and parent login (it cannot be done in static files). Firebase limits admin and teacher attempts.
 - Custom domain: add a `CNAME` file and DNS records, then turn on Enforce HTTPS in GitHub Pages settings.
 - The app text mixes English and romanised Hindi.
-- Not checked: colour contrast on dashboard pages, text on gradient backgrounds, image rights (the logo is the only photo-like asset), and whether every button works with real data.
+- Not checked: text over gradient or image backgrounds (the automatic check skips them), text that only appears once real data loads, image rights (the logo is the only photo-like asset), and whether every button works with real data.
 - Not changed: the colourful gradient in your logo itself.
 
 ## 6. Legal pages: please confirm

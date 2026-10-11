@@ -20,7 +20,7 @@
 
 <style>
   :root{
-    --paper:#f7f2e4; --ink:#241f14; --ink-soft:#7a715c; --ink-faint:#a89d84;
+    --paper:#f7f2e4; --ink:#241f14; --ink-soft:#6d644e; --ink-faint:#a89d84;
     --amber:#ffb347; --amber-deep:#ff8c42; --amber-shadow:#d9691f; --coral:#ff6f61;
     --navy-900:#161d3a; --navy-950:#0e1326;
     --radius-lg:24px; --radius-md:14px;
@@ -28,7 +28,7 @@
     --surface-card:#ffffff; --surface-card-border:rgba(36,31,20,.06); --surface-card-shadow:rgba(36,31,20,.1);
   }
   html[data-theme="dark"]{
-    --paper:#161d3a; --ink:#f3ecd9; --ink-soft:#b7bcdc; --ink-faint:#7c84a8;
+    --paper:#161d3a; --ink:#f3ecd9; --ink-soft:#b7bcdc; --ink-faint:#9199bb;
     --surface-card:rgba(255,255,255,.045); --surface-card-border:rgba(255,255,255,.1); --surface-card-shadow:rgba(0,0,0,.35);
   }
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -40,7 +40,8 @@
   @keyframes slideUpFade{ from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:translateY(0);} }
 
   .pay-page{ max-width:460px; margin:0 auto; padding:32px 20px 60px; animation:fadeInPage .5s ease both; }
-  .pay-back{ display:inline-flex; align-items:center; gap:8px; color:var(--amber-shadow); font-size:13px; font-weight:700; margin-bottom:18px; transition:gap .2s var(--ease); }
+  .pay-back{ display:inline-flex; align-items:center; gap:8px; color:#a8510f; font-size:13px; font-weight:700; margin-bottom:18px; transition:gap .2s var(--ease); }
+  html[data-theme="dark"] .pay-back{ color:#ffb347; }
   .pay-back:hover{ gap:11px; }
 
   .pay-card{ background:var(--surface-card); border:1px solid var(--surface-card-border); border-radius:var(--radius-lg); box-shadow:0 20px 50px var(--surface-card-shadow); padding:32px 26px; text-align:center; animation:slideUpFade .5s var(--ease) both; }

@@ -20,16 +20,17 @@
 
 <style>
   :root{
-    --paper:#f7f2e4; --cream:#fdf6e8; --ink:#241f14; --ink-soft:#7a715c; --ink-faint:#a89d84;
+    --paper:#f7f2e4; --cream:#fdf6e8; --ink:#241f14; --ink-soft:#6d644e; --ink-faint:#a89d84;
     --amber:#ffb347; --amber-deep:#ff8c42; --amber-shadow:#d9691f; --coral:#ff6f61;
     --navy-900:#161d3a; --navy-950:#0e1326;
-    --green:#2fb87f; --green-bg:#e4f7ee; --red:#e5584a; --red-bg:#fdeceb;
+    --green:#1f8f5f; --green-bg:#e4f7ee; --red:#c0392b; --red-bg:#fdeceb;
     --radius-lg:24px; --radius-md:14px;
     --ease:cubic-bezier(.16,.84,.44,1);
     --surface-card:#ffffff; --surface-card-border:rgba(36,31,20,.06); --surface-card-shadow:rgba(36,31,20,.09);
   }
   html[data-theme="dark"]{
-    --paper:#161d3a; --cream:#1c2444; --ink:#f3ecd9; --ink-soft:#b7bcdc; --ink-faint:#7c84a8;
+    --green:#2fb87f; --red:#ff7b6e;
+    --paper:#161d3a; --cream:#1c2444; --ink:#f3ecd9; --ink-soft:#b7bcdc; --ink-faint:#9199bb;
     --green-bg:#173a2c; --red-bg:#3a1e1c;
     --surface-card:rgba(255,255,255,.045); --surface-card-border:rgba(255,255,255,.1); --surface-card-shadow:rgba(0,0,0,.35);
   }
@@ -80,11 +81,12 @@
 
   .comment-box{ background:var(--paper); border-radius:var(--radius-md); padding:16px 18px; font-size:13.5px; line-height:1.6; color:var(--ink); margin-bottom:26px; }
 
+  html[data-theme="dark"] .signature-mark{ color:var(--ink); }
   .signature-row{ text-align:right; padding-top:10px; }
   .signature-mark{ font-family:'Dancing Script', cursive; font-size:26px; color:var(--navy-900); }
   .signature-row p{ font-size:11.5px; color:var(--ink-soft); border-top:1px solid rgba(36,31,20,.12); display:inline-block; padding-top:4px; margin-top:2px; }
 
-  .result-footer{ text-align:center; font-size:12.5px; color:var(--ink-faint); margin-top:24px; }
+  .result-footer{ text-align:center; font-size:12.5px; color:var(--ink-soft); margin-top:24px; }
 
   @media print{
     body{ background:#fff; }
