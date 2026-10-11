@@ -1,22 +1,22 @@
 (function () {
   'use strict';
   var API = (window.NEXORA_API_URL || '').replace(/\/$/, '');
-  var KEY = 'nexora.v1';
-  var DEF_SYS = "You are NEXORA, a helpful, intelligent, honest, and friendly personal AI assistant. Explain complex topics clearly, follow the user's language preference, admit uncertainty, and provide practical answers. Never pretend to have access to files, tools, websites, or memories that are not available.";
+  var KEY = 'nexora.v2';
+  var DEF_SYS = "You are Alpha, a helpful, intelligent, honest, and friendly personal AI assistant. Explain complex topics clearly, follow the user's language preference, admit uncertainty, and provide practical answers. Never pretend to have access to files, tools, websites, or memories that are not available.";
   var SUGGEST = ['Explain a hard topic simply', 'Help me plan my study week', 'Draft a polite email', 'Review my code and find bugs'];
   var IC = { menu: 'M4 6h16M4 12h16M4 18h16', plus: 'M12 5v14M5 12h14', send: 'M12 19V5M5 12l7-7 7 7', stop: 'M7 7h10v10H7z', copy: 'M9 9h10v10H9zM5 15V5h10', x: 'M6 6l12 12M18 6L6 18', edit: 'M4 20h4L19 9l-4-4L4 16zM13 7l4 4', trash: 'M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13', gear: 'M12 15a3 3 0 100-6 3 3 0 000 6zM12 3v3M12 18v3M3 12h3M18 12h3', down: 'M12 4v11M7 11l5 5 5-5M5 20h14', redo: 'M20 11a8 8 0 10-2.3 5.7M20 5v6h-6' };
   var ic = function (n) { return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + IC[n] + '"/></svg>'; };
   var $ = function (s) { return document.querySelector(s); };
   var esc = function (s) { return s.replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
 
-  var st = { convs: [], cur: null, set: { name: 'NEXORA', system: DEF_SYS, theme: 'dark', save: true, model: '' } };
+  var st = { convs: [], cur: null, set: { name: 'Alpha', system: DEF_SYS, theme: 'dark', save: true, model: '' } };
   try { var raw = JSON.parse(localStorage.getItem(KEY)); if (raw) { st.convs = raw.convs || []; Object.assign(st.set, raw.set); if (st.convs.some(function (c) { return c.id === raw.cur; })) st.cur = raw.cur; } } catch (e) {}
   var busy = false, ctl = null, errMsg = '', backend = { ok: false, note: '' };
 
   function persist() { try { localStorage.setItem(KEY, JSON.stringify({ set: st.set, cur: st.cur, convs: st.set.save ? st.convs : [] })); } catch (e) {} }
   function cur() { return st.convs.find(function (c) { return c.id === st.cur; }); }
   function newChat() { if (busy) return; st.cur = null; errMsg = ''; closeSide(); ui(); $('#input').focus(); }
-  function sysPrompt() { var n = st.set.name || 'NEXORA'; return (n !== 'NEXORA' ? 'Your name is ' + n + '. ' : '') + (st.set.system || DEF_SYS); }
+  function sysPrompt() { var n = st.set.name || 'Alpha'; return (n !== 'Alpha' ? 'Your name is ' + n + '. ' : '') + (st.set.system || DEF_SYS); }
 
   function renderList() {
     var q = $('#search').value.trim().toLowerCase(), ul = $('#list'); ul.innerHTML = '';
@@ -42,14 +42,14 @@
     if (busy && last) d.querySelector('.actions').hidden = true;
     return d;
   }
-  function fill(el, m) { el.innerHTML = m.content ? window.NexoraMD.render(m.content) : '<span class="dots" aria-label="NEXORA is thinking"><i></i><i></i><i></i></span>'; }
+  function fill(el, m) { el.innerHTML = m.content ? window.NexoraMD.render(m.content) : '<span class="dots" aria-label="Alpha is thinking"><i></i><i></i><i></i></span>'; }
 
   function renderLog() {
     var log = $('#log'), c = cur(); log.innerHTML = '';
     if (!c || !c.messages.length) {
       var w = document.createElement('div'); w.className = 'welcome';
       w.innerHTML = '<div class="mark" aria-hidden="true"></div><h2></h2><p>Ask anything. Replies stream in as they are written, and your chats stay on this device.</p><div class="sugg"></div>';
-      w.querySelector('h2').textContent = st.set.name || 'NEXORA';
+      w.querySelector('h2').textContent = st.set.name || 'Alpha';
       SUGGEST.forEach(function (s) { var b = document.createElement('button'); b.type = 'button'; b.textContent = s; b.onclick = function () { send(s); }; w.querySelector('.sugg').appendChild(b); });
       log.appendChild(w); return;
     }
@@ -63,7 +63,7 @@
 
   function ui() {
     renderList(); renderLog();
-    var c = cur(); $('#title').textContent = c ? c.title : (st.set.name || 'NEXORA');
+    var c = cur(); $('#title').textContent = c ? c.title : (st.set.name || 'Alpha');
     var s = $('#send'); s.innerHTML = ic(busy ? 'stop' : 'send'); s.setAttribute('aria-label', busy ? 'Stop generating' : 'Send message');
     s.disabled = !busy && !backend.ok;
     var b = $('#banner'); b.hidden = backend.ok && navigator.onLine; b.className = backend.ok ? '' : 'warn';
@@ -80,7 +80,7 @@
     if (e && e.code === 'forbidden') return 'This site is not allowed to use the server. Check ALLOWED_ORIGIN.';
     if (e && e.msg) return e.msg;
     if (!navigator.onLine) return 'You are offline. Reconnect, then retry.';
-    return 'Could not reach the NEXORA server. Check your connection, then retry.';
+    return 'Could not reach the Alpha server. Check your connection, then retry.';
   }
 
   async function ask(c) {
@@ -153,7 +153,7 @@
   $('#resetSys').onclick = function () { $('#sSys').value = DEF_SYS; };
   $('#clearAll').onclick = function () { if (confirm('Delete all chats on this device? This cannot be undone.')) { st.convs = []; st.cur = null; persist(); ui(); } };
   $('#setForm').addEventListener('submit', function () {
-    st.set.name = $('#sName').value.trim().slice(0, 30) || 'NEXORA'; st.set.system = $('#sSys').value.trim() || DEF_SYS;
+    st.set.name = $('#sName').value.trim().slice(0, 30) || 'Alpha'; st.set.system = $('#sSys').value.trim() || DEF_SYS;
     st.set.theme = $('#sTheme').value; st.set.save = $('#sSave').checked;
     if (!st.set.save) st.convs = st.convs.filter(function (c) { return c.id === st.cur; });
     persist(); ui();
@@ -161,7 +161,7 @@
 
   async function init() {
     ui();
-    if (!API) { backend.note = 'NEXORA is not connected to a server yet. Add your Worker URL in nexora-config.js (see NEXORA-SETUP.md).'; ui(); return; }
+    if (!API) { backend.note = 'Alpha is not connected to a server yet. Add your Worker URL in nexora-config.js (see NEXORA-SETUP.md).'; ui(); return; }
     try {
       var r = await fetch(API + '/api/models'); var j = await r.json();
       if (!r.ok) throw 0;
@@ -171,7 +171,7 @@
         if (!j.models.includes(st.set.model)) st.set.model = j.models[0];
         if (j.models.length > 1) { var s = $('#model'); s.innerHTML = ''; j.models.forEach(function (m) { var o = document.createElement('option'); o.value = m; o.textContent = m; s.appendChild(o); }); s.value = st.set.model; s.hidden = false; }
       }
-    } catch (e) { backend.note = 'Cannot reach the NEXORA server. Check the Worker URL and its ALLOWED_ORIGIN setting.'; }
+    } catch (e) { backend.note = 'Cannot reach the Alpha server. Check the Worker URL and its ALLOWED_ORIGIN setting.'; }
     ui();
   }
   init();
