@@ -1,6 +1,6 @@
 :root{
   --bg:#fdf6e8; --card:#ffffff; --ink:#241f14; --ink-soft:#5c5442; --line:rgba(36,31,20,.14);
-  --accent:#b25a12; --accent-ink:#ffffff; --focus:#1f5fbf;
+  --accent:#9c4d0d; --accent-ink:#ffffff; --focus:#1f5fbf;
 }
 @media (prefers-color-scheme: dark){
   :root{ --bg:#0e1326; --card:#161d3a; --ink:#f3ecd9; --ink-soft:#b7bcdc; --line:rgba(255,255,255,.16);

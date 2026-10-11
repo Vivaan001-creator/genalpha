@@ -26,10 +26,10 @@ function escapeHtml(str) {
 function buildUpiLink({ upiId, payeeName, amount, note }) {
   const params = new URLSearchParams({
     pa: upiId,
-    pn: payeeName || "Diksha Kumari",
+    pn: payeeName || "School",
     am: String(amount),
     cu: "INR",
-    tn: note || "Tuition fee"
+    tn: note || "School Fee"
   });
   return `upi://pay?${params.toString()}`;
 }
@@ -89,7 +89,7 @@ async function init() {
   const feeFrequency = classData ? (classData.feeFrequency || "Monthly") : "Monthly";
 
   if (!feeAmount) {
-    renderState("fa-triangle-exclamation", "Is class ke liye fee abhi set nahi hui hai. Tutor se sampark karein.");
+    renderState("fa-triangle-exclamation", "Is class ke liye fee abhi set nahi hui hai. School office se sampark karein.");
     return;
   }
 
@@ -127,7 +127,7 @@ async function init() {
         <div class="pay-period">${escapeHtml(period.label)}</div>
         <p class="pay-confirm-hint">Yeh payment already ho chuka hai - kuch aur karne ki zaroorat nahi.</p>
         <a href="parent-dashboard.html" class="pay-back" style="justify-content:center;">
-          <i class="fa-solid fa-arrow-left"></i> Dashboard
+          <i class="fa-solid fa-arrow-left"></i> Dashboard par jaayein
         </a>
       </div>
     `;
@@ -140,9 +140,9 @@ async function init() {
         <div class="pay-icon" style="background:#d97706;"><i class="fa-solid fa-hourglass-half"></i></div>
         <div class="pay-who">${escapeHtml(student.name || roll)} · Roll ${escapeHtml(roll)}</div>
         <div class="pay-period">${escapeHtml(period.label)}</div>
-        <p class="pay-confirm-hint">Aap is month ka payment pehle hi report kar chuke hain. Admin verify karne ke baad yeh "Paid" dikhega.</p>
+        <p class="pay-confirm-hint">Aap is month ka payment pehle hi report kar chuke hain. School admin verify karne ke baad yeh "Paid" dikhega.</p>
         <a href="parent-dashboard.html" class="pay-back" style="justify-content:center;">
-          <i class="fa-solid fa-arrow-left"></i> Dashboard
+          <i class="fa-solid fa-arrow-left"></i> Dashboard par jaayein
         </a>
       </div>
     `;
@@ -153,7 +153,7 @@ async function init() {
 
   // Payment settings (UPI VPA) - admin-configured, read-only here.
   let upiId = "";
-  let payeeName = "Diksha Kumari";
+  let payeeName = "Modern International School";
   try {
     const settingsSnap = await getDoc(doc(db, "settings", "payment"));
     if (settingsSnap.exists()) {
@@ -170,7 +170,7 @@ async function init() {
         <div class="pay-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
         <div class="pay-who">${escapeHtml(student.name || roll)} · Roll ${escapeHtml(roll)}</div>
         <div class="pay-period">${escapeHtml(period.label)} - Due ₹${amountDue}</div>
-        <p class="pay-confirm-hint">Tutor ne abhi online (UPI) payment set up nahi kiya hai. Tutor se sampark karke payment karein.</p>
+        <p class="pay-confirm-hint">School ne abhi online (UPI) payment set up nahi kiya hai. Kripya school office mein sampark karke payment karein.</p>
       </div>
     `;
     return;
@@ -201,7 +201,7 @@ async function init() {
 
       <p class="pay-confirm-hint">
         UPI app mein payment poora karne ke baad hi neeche wala button dabayein. Yeh payment turant "Paid" nahi dikhega -
-        <strong>Admin verify karega</strong> (apne bank/UPI statement se match karke), uske baad hi status "Paid" mein badlega.
+        <strong>school admin verify karega</strong> (apne bank/UPI statement se match karke), uske baad hi status "Paid" mein badlega.
       </p>
 
       <button type="button" class="btn-confirm-paid" id="confirmPaidBtn" disabled>
@@ -245,7 +245,7 @@ async function init() {
         <div class="pay-card">
           <div class="pay-icon" style="background:#d97706;"><i class="fa-solid fa-hourglass-half"></i></div>
           <div class="pay-period">Payment Reported</div>
-          <p class="pay-confirm-hint">${escapeHtml(period.label)} ka ₹${amountDue} payment report ho gaya hai. Admin verify karne ke baad yeh "Paid" dikhega. Dashboard par redirect kiya ja raha hai...</p>
+          <p class="pay-confirm-hint">${escapeHtml(period.label)} ka ₹${amountDue} payment report ho gaya hai. School admin verify karne ke baad yeh "Paid" dikhega. Dashboard par redirect kiya ja raha hai...</p>
         </div>
       `;
 

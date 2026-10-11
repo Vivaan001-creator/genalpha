@@ -171,10 +171,10 @@ export function isPaymentVerified(pay) {
 export function buildUpiLink({ upiId, payeeName, amount, note }) {
   const params = new URLSearchParams({
     pa: upiId,
-    pn: payeeName || "Diksha Kumari",
+    pn: payeeName || "School",
     am: String(amount),
     cu: "INR",
-    tn: note || "Tuition Fee"
+    tn: note || "School Fee"
   });
   return `upi://pay?${params.toString()}`;
 }

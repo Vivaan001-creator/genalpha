@@ -9,3 +9,9 @@
 @media (max-width:520px){
   .form-grid, .field-grid, .view-grid, .view-grid.two-col{ grid-template-columns:1fr !important; }
 }
+a[href^="tel:"], a[href^="mailto:"]{ color:inherit; text-decoration:underline; text-underline-offset:3px; }
+
+/* Keyboard users always get a visible focus ring, even where a page removed the default one. */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
+  outline:3px solid #8ab4ff !important; outline-offset:2px !important;
+}

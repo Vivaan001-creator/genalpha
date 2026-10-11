@@ -1344,7 +1344,7 @@ async function loadTeacherTable(){
                 <td data-label="Name">${escapeHtmlAdmin(teacher.name || "-")}</td>
                 <td data-label="Subject">${escapeHtmlAdmin(teacher.subject || "-")}</td>
                 <td data-label="Status"><span class="${statusClass}">${escapeHtmlAdmin(teacher.status || "-")}</span></td>
-                <td data-label="Phone">${escapeHtmlAdmin(teacher.phone || "-")}</td>
+                <td data-label="Phone">${contactLinkHtml("tel", teacher.phone)}</td>
                 <td data-label="Action">
                   <div class="action-btns">
                     <button class="btn-view" onclick="viewTeacher(${jsq(docSnap.id)})">
@@ -1793,6 +1793,25 @@ saveTeacherProfileDetails;
 // Load Teacher Profile Details
 // ==========================
 
+// Show a phone number or email as a tap-to-call / tap-to-email link.
+function contactLinkHtml(kind, value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "-";
+  if (kind === "tel") {
+    const digits = raw.replace(/[^\d+]/g, "");
+    if (digits.replace(/\D/g, "").length < 7) return escapeHtmlAdmin(raw);
+    return '<a href="tel:' + escapeHtmlAdmin(digits) + '">' + escapeHtmlAdmin(raw) + '</a>';
+  }
+  if (!/^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']+$/.test(raw)) return escapeHtmlAdmin(raw);
+  return '<a href="mailto:' + escapeHtmlAdmin(raw) + '">' + escapeHtmlAdmin(raw) + '</a>';
+}
+
+function setContactLink(id, kind, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = contactLinkHtml(kind, value);
+}
+
 function setTxt(id, value, fallback) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -1829,8 +1848,8 @@ snap.data();
 setTxt("profileName", teacher.name, "Unnamed Teacher");
 setTxt("profileRoleLine", teacher.subject ? `${teacher.subject} Teacher` : "Teacher");
 setTxt("profileEmployeeId", teacher.employeeId, "-");
-setTxt("profilePhone", teacher.phone, "-");
-setTxt("profileEmail", teacher.email, "-");
+setContactLink("profilePhone", "tel", teacher.phone);
+setContactLink("profileEmail", "mail", teacher.email);
 
 const heroAvatarImg = document.getElementById("profileAvatarImg");
 const heroAvatarInitial = document.getElementById("profileAvatarInitial");
@@ -1867,8 +1886,8 @@ setTxt("piStatus", teacher.status, "Active");
 setTxt("prEmployeeId", teacher.employeeId, "-");
 setTxt("profileDepartment", teacher.department, "-");
 setTxt("profileSubject", teacher.subject, "-");
-setTxt("prEmail", teacher.email, "-");
-setTxt("prMobile", teacher.phone, "-");
+setContactLink("prEmail", "mail", teacher.email);
+setContactLink("prMobile", "tel", teacher.phone);
 // profileAssigned (Classes Assigned) is filled in by computeTeacherStats()
 // below, once we know which classes actually match this teacher's email -
 // BUG FIX: this used to just repeat the teacher's subject here, which
@@ -2206,7 +2225,6 @@ async function loadEditTeacher(){
 
 const id = localStorage.getItem("editTeacherId");
 
-console.log(id);
 
 if(!id){
     alert("Teacher ID Not Found");
@@ -2377,7 +2395,7 @@ if (btn) {
 
         } catch (error) {
 
-            console.log(error);
+            console.error("Request failed");
 
             alert(error.code);
 
