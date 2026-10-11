@@ -341,11 +341,11 @@ async function loadResult(month) {
 
     rows += `
       <tr>
-        <td>${escapeHtml(subject)}</td>
-        <td>${maxMarks}</td>
-        <td>${passMarks}</td>
-        <td>${score}</td>
-        <td><span class="${passed ? "status-pass" : "status-fail"}">${passed ? "Pass" : "Fail"}</span></td>
+        <td data-label="Subject">${escapeHtml(subject)}</td>
+        <td data-label="Max">${maxMarks}</td>
+        <td data-label="Pass">${passMarks}</td>
+        <td data-label="Marks">${score}</td>
+        <td data-label="Status"><span class="${passed ? "status-pass" : "status-fail"}">${passed ? "Pass" : "Fail"}</span></td>
       </tr>
     `;
   });
