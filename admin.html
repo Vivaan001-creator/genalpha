@@ -1,10 +1,18 @@
 <!DOCTYPE html>
-<html lang="hi" data-theme="dark">
+<html lang="en-IN" data-theme="dark">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self' mailto:">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="description" content="Admin sign in for GenAlpha home tuition management.">
+<meta name="theme-color" content="#0e1326">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="site.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="appearance.js"></script>
-<title>Admin Login - Home Tuition</title>
+<title>Admin Login - GenAlpha</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -91,7 +99,7 @@
   .forgot-link:hover{ color:var(--amber); }
 
   .login-btn{ width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:14px; border:none;
-    border-radius:999px; cursor:pointer; background:linear-gradient(135deg, var(--amber) 0%, var(--coral) 100%);
+    border-radius:12px; cursor:pointer; background:linear-gradient(135deg, var(--amber) 0%, var(--coral) 100%);
     color:#241608; font-weight:700; font-size:14.5px; font-family:inherit;
     box-shadow:0 4px 0 var(--amber-shadow), 0 14px 28px rgba(255,140,66,.28);
     transition:transform .15s var(--ease), box-shadow .15s var(--ease); }
@@ -242,7 +250,7 @@
   });
   cord.addEventListener('keydown', (e) => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); cycleNeon(); } });
 
-  // Appearance menu (System / Light / Dark) — persists across the whole site
+  // Appearance menu (System / Light / Dark) - persists across the whole site
   try { Appearance.renderMenu(document.getElementById('appearanceMount'), { variant: 'corner' }); } catch(e) {}
 
   if (!reduceMotion && window.matchMedia('(hover:hover)').matches){
@@ -274,5 +282,6 @@
 </script>
 
 <script type="module" src="admin.js"></script>
+<nav class="legal-links" aria-label="Legal"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="cookies.html">Cookies</a><a href="refund.html">Refunds</a></nav>
 </body>
 </html>

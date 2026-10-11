@@ -5,14 +5,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 // ==========================================================
-// Session guard — supports EITHER session type that can land on
+// Session guard - supports EITHER session type that can land on
 // this page: a student's own login (studentLoggedIn/studentRoll)
 // or a parent's login (parentLoggedIn/parentActiveRoll, set by
-// parent.js — parentActiveRoll is whichever child is currently
+// parent.js - parentActiveRoll is whichever child is currently
 // selected on the Parent Dashboard's child switcher).
 //
 // This page is intentionally shared rather than duplicated per
-// role — same Firestore reads, same print layout either way.
+// role - same Firestore reads, same print layout either way.
 // ==========================================================
 const isParentSession = localStorage.getItem("parentLoggedIn") === "true";
 const isStudentSession = localStorage.getItem("studentLoggedIn") === "true";
@@ -34,7 +34,7 @@ if (!roll) {
 }
 
 // ==========================================================
-// Grading helpers — identical boundaries/wording to student.js
+// Grading helpers - identical boundaries/wording to student.js
 // so the dashboard and this print page always agree.
 // ==========================================================
 
@@ -160,7 +160,7 @@ function isLowerClass(classValue) {
 
 // classSubjects above uses keys like "Nursery"/"1", while
 // student.class can be stored as "Class 1", "class 1", "1", etc.
-// Normalize both sides the same way (used to be missing — this is
+// Normalize both sides the same way (used to be missing - this is
 // what let stray metadata fields on the result document render as
 // if they were subjects, see getSubjectsForClass()).
 const classSubjectsNormalized = {};
@@ -204,7 +204,7 @@ function escapeHtml(str) {
 }
 
 // ==========================================================
-// Month list — same list student.js uses for the dashboard,
+// Month list - same list student.js uses for the dashboard,
 // kept here too since this page must work stand-alone even if
 // nothing set a "selected month" before navigating in.
 // ==========================================================
@@ -232,7 +232,7 @@ function currentMonthLabel() {
 const tableBody = document.getElementById("marksTableBody");
 const monthLabel = document.getElementById("monthLabel");
 
-// The month was already chosen on the dashboard (Results tab) —
+// The month was already chosen on the dashboard (Results tab) -
 // this page just shows that month's result, it doesn't offer a
 // second place to change it. Falls back to the current month only
 // if someone opens this page directly without going through the
@@ -305,7 +305,7 @@ async function loadResult(month) {
 
   // BUG FIX: this used to be Object.entries(data), which rendered
   // EVERY field stored on the result document as if it were a
-  // subject — including bookkeeping fields the teacher's marks-entry
+  // subject - including bookkeeping fields the teacher's marks-entry
   // page also saves on the same doc (updatedBy, updatedAt,
   // studentRoll, etc). A Firestore Timestamp shown as "marks" is
   // where the huge garbled numbers in the total/percentage came

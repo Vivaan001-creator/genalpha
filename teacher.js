@@ -37,8 +37,13 @@ function escapeHtml(str) {
     .replaceAll('"', "&quot;");
 }
 
+// Safe value for use inside an inline onclick="..." attribute.
+function jsq(v) {
+  return escapeHtml(JSON.stringify(String(v === undefined || v === null ? "" : v)));
+}
+
 // ==========================================================
-// BUG FIX — class-key matching
+// BUG FIX - class-key matching
 //
 // Admin's "Add Student" form saves student.class as whatever
 // text the Class <select> shows (e.g. "Class 3"), while a
@@ -105,7 +110,7 @@ async function teacherLogin() {
 
     const teacherDoc = snap.docs[0];
 
-    // Login tracking — same as the student side: a record admin can review,
+    // Login tracking - same as the student side: a record admin can review,
     // plus this account's own last-login shown on the teacher's dashboard.
     try {
       const teacherData = teacherDoc.data();
@@ -251,7 +256,7 @@ async function loadTeacherDashboard() {
       const classSnap = await getDocs(classQuery);
 
       if (classSnap.empty) {
-        classBox.innerHTML = `<p class="no-class-msg">Abhi koi class assign nahi hui hai — Admin se class assignment ke liye sampark karein.</p>`;
+        classBox.innerHTML = `<p class="no-class-msg">Abhi koi class assign nahi hui hai - Admin se class assignment ke liye sampark karein.</p>`;
       } else {
         classBox.innerHTML = classSnap.docs.map((d) => {
           const c = d.data();
@@ -323,7 +328,7 @@ const classSubjects = {
 // classSubjects entries above having briefly drifted out of sync
 // with admin.js/result.js, meant a class like "4" was shown
 // Computer/E.V.S/G.K fields in the marks modal instead of the
-// Science/Social Studies the rest of the app expects — so those two
+// Science/Social Studies the rest of the app expects - so those two
 // subjects could never actually be entered, and always showed as 0
 // on the result. Only Nursery/L.K.G/U.K.G use the 50/17 scale.
 const lowerClasses = ["Nursery", "L.K.G", "U.K.G"];
@@ -380,7 +385,7 @@ async function getMyContext() {
 
   if (teacher.email) {
     // BUG FIX: this used to take only classSnap.docs[0], so a teacher
-    // assigned to several classes only ever saw the first one — every
+    // assigned to several classes only ever saw the first one - every
     // other class's students were silently dropped everywhere that
     // read ctx.myClass. Now we keep ALL matching classes.
     const classSnap = await getDocs(query(collection(db, "classes"), where("teacherEmail", "==", teacher.email)));
@@ -445,7 +450,7 @@ async function loadMyStudents() {
       <td data-label="Father's Name">${escapeHtml(s.father || "-")}</td>
       <td data-label="Action">
         <div class="action-btns">
-          <button class="btn-view" onclick="openMarksFor('${docSnap.id}')">
+          <button class="btn-view" onclick="openMarksFor(${jsq(docSnap.id)})">
             <i class="fa-solid fa-pen-to-square"></i> Add Marks
           </button>
         </div>
@@ -525,7 +530,7 @@ async function loadMarksPage() {
       <td data-label="Class">${escapeHtml(s.class || "-")}</td>
       <td data-label="Action">
         <div class="action-btns">
-          <button class="btn-edit" onclick="openMarksModal('${docSnap.id}', '${escapeHtml(s.name || "")}', '${escapeHtml(s.class || "")}')">
+          <button class="btn-edit" onclick="openMarksModal(${jsq(docSnap.id)}, ${jsq(s.name || "")}, ${jsq(s.class || "")})">
             <i class="fa-solid fa-pen-to-square"></i> Enter Marks
           </button>
         </div>
@@ -593,7 +598,7 @@ window.openMarksModal = openMarksModal;
 // ==========================
 // Publish Result (per-teacher, from the Marks modal)
 // Each teacher can publish/unpublish a student's result for
-// their own class right from marks entry, next to Save Marks —
+// their own class right from marks entry, next to Save Marks -
 // this used to live on the admin's Edit Student page.
 // ==========================
 let currentMarksPublishStatus = "unpublished";
@@ -655,7 +660,7 @@ async function toggleResultPublish() {
   try {
     await setDoc(doc(db, "students", currentMarksRoll), { publishStatus: newStatus }, { merge: true });
     updatePublishUI(newStatus);
-    alert(newStatus === "published" ? "Result published — the student can now see it." : "Result unpublished.");
+    alert(newStatus === "published" ? "Result published - the student can now see it." : "Result unpublished.");
   } catch (error) {
     console.error(error);
     alert(error.message);
@@ -941,7 +946,7 @@ async function loadHomeworkPage() {
     }
 
   } else {
-    // page has no class picker — fall back to a merged subject list
+    // page has no class picker - fall back to a merged subject list
     let subjects = DEFAULT_SUBJECTS;
     if (ctx && ctx.myClasses && ctx.myClasses.length > 0) {
       const merged = new Set();
@@ -1012,11 +1017,11 @@ async function loadHomeworkList() {
         <span class="due">${escapeHtml(hw.dueDate || "")}</span>
       </div>
       <div class="homework-body">
-        <h4>${escapeHtml(hw.title || "Homework")} <small style="font-weight:500;color:var(--text-muted,#8a8fa3);">— ${escapeHtml(hw.className || hw.classId || "")}</small></h4>
+        <h4>${escapeHtml(hw.title || "Homework")} <small style="font-weight:500;color:var(--text-muted,#8a8fa3);">- ${escapeHtml(hw.className || hw.classId || "")}</small></h4>
         <p>${escapeHtml(hw.description || "")}</p>
       </div>
       <div class="action-btns">
-        <button class="btn-delete" onclick="deleteHomework('${docSnap.id}')">
+        <button class="btn-delete" onclick="deleteHomework(${jsq(docSnap.id)})">
           <i class="fa-solid fa-trash"></i>
         </button>
       </div>
@@ -1060,7 +1065,7 @@ async function addHomework() {
   }
 
   if (!targetClass) {
-    alert("Aap multiple classes ke teacher hain — pehle yeh batayein ki yeh homework kis class ke liye hai.");
+    alert("Aap multiple classes ke teacher hain - pehle yeh batayein ki yeh homework kis class ke liye hai.");
     return;
   }
 

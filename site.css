@@ -1,0 +1,11 @@
+/* Shared by every page: footer legal links. */
+.footer-links, .legal-links{ display:flex; flex-wrap:wrap; justify-content:center; gap:4px 16px; margin:0 0 6px; padding:0; }
+.footer-links a, .legal-links a{ color:inherit; opacity:.85; text-decoration:underline; text-underline-offset:3px; padding:8px 2px; min-height:44px; display:inline-flex; align-items:center; }
+.legal-links{ margin-top:22px; font-size:12.5px; opacity:1; }
+
+/* Phones: stack two-column form grids so fields never push the page sideways. */
+.field, .form-grid > *, .field-grid > *{ min-width:0; }
+.field input, .field select, .field textarea{ max-width:100%; }
+@media (max-width:520px){
+  .form-grid, .field-grid, .view-grid, .view-grid.two-col{ grid-template-columns:1fr !important; }
+}

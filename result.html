@@ -1,11 +1,19 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en-IN">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self' mailto:">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="description" content="View a student assessment result.">
+<meta name="theme-color" content="#0e1326">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="site.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="appearance.js"></script>
 <script src="session-timer.js"></script>
-<title>Home Tuition - Assessment Result</title>
+<title>Assessment Result - GenAlpha</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Dancing+Script:wght@600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -38,7 +46,7 @@
   .result-header-actions{ display:flex; gap:8px; flex-wrap:wrap; }
   .result-header-actions button{
     display:inline-flex; align-items:center; gap:7px; border:none; cursor:pointer; font-family:inherit;
-    font-size:12.5px; font-weight:600; padding:10px 16px; border-radius:999px; background:var(--surface-card);
+    font-size:12.5px; font-weight:600; padding:10px 16px; border-radius:12px; background:var(--surface-card);
     border:1.5px solid var(--surface-card-border); color:var(--ink); transition:transform .15s var(--ease), border-color .15s var(--ease);
   }
   .result-header-actions button:hover{ transform:translateY(-2px); border-color:var(--amber-deep); color:var(--amber-deep); }

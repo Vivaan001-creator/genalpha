@@ -93,23 +93,35 @@ async function createTeacherLoginAccount(email, password) {
 // Admin Login
 // ==========================
 
+const ADMIN_LOGIN_EMAIL = "vivaan510399@gmail.com";
+
 async function adminLogin() {
 
-    
-
     const email = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value.trim();
+    const password = document.getElementById("password").value;
 
-    
+    if (!email || !password) {
+        alert("Please enter your email and password.");
+        return;
+    }
 
     try {
 
-        await signInWithEmailAndPassword(auth, email, password);
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+
+        // A teacher account is also a valid Firebase login, so make sure
+        // this is actually the admin before opening any admin screen.
+        if ((cred.user.email || "").toLowerCase() !== ADMIN_LOGIN_EMAIL) {
+            await signOut(auth);
+            localStorage.removeItem("adminLoggedIn");
+            alert("This account does not have admin access.");
+            return;
+        }
 
         localStorage.setItem("adminLoggedIn","true");
 
         // Login tracking runs in the background AFTER we've already
-        // committed to redirecting — a slow/hung Firestore call must
+        // committed to redirecting - a slow/hung Firestore call must
         // never be able to block or freeze the login itself.
         recordAdminLoginTracking();
 
@@ -117,8 +129,13 @@ async function adminLogin() {
 
     } catch (error) {
 
-        alert(error.code);
-        alert(error.message);
+        // Same message for every failure so the form does not reveal
+        // whether an email address has an account.
+        if (error && (error.code === "auth/too-many-requests")) {
+            alert("Too many attempts. Please wait a few minutes and try again.");
+        } else {
+            alert("Incorrect email or password.");
+        }
 
     }
 
@@ -126,7 +143,7 @@ async function adminLogin() {
 
 window.adminLogin = adminLogin;
 
-// Background login tracking for adminLogin() — deliberately never
+// Background login tracking for adminLogin() - deliberately never
 // awaited by the caller, so a slow/hung Firestore call can't block
 // the actual login/redirect. Best-effort only.
 async function recordAdminLoginTracking() {
@@ -281,10 +298,10 @@ async function loadStudentTable() {
                 <td data-label="Class">${escapeHtmlAdmin(classLabel)}</td>
                 <td data-label="Action">
                   <div class="action-btns">
-                    <button class="btn-edit" onclick="editStudent('${docSnap.id}')">
+                    <button class="btn-edit" onclick="editStudent(${jsq(docSnap.id)})">
                       <i class="fa-solid fa-pen"></i> Edit
                     </button>
-                    <button class="btn-delete" onclick="deleteStudent('${docSnap.id}')">
+                    <button class="btn-delete" onclick="deleteStudent(${jsq(docSnap.id)})">
                       <i class="fa-solid fa-trash"></i> Delete
                     </button>
                   </div>
@@ -514,7 +531,7 @@ async function loadStudent() {
     // BUG FIX: edit-student.html no longer has a #month select or
     // #marksEditor (marks entry now lives on teacher-marks.html), so
     // this used to crash here with "Cannot read properties of null"
-    // every time this page loaded — which also silently broke
+    // every time this page loaded - which also silently broke
     // saveStudent() below since the crash happened before any of
     // the form fields could be edited/saved.
     const monthSelect = document.getElementById("month");
@@ -531,7 +548,7 @@ async function loadStudent() {
 }
 
 // (Student count for the dashboard card is now handled once,
-// in the consolidated loadDashboardStats() further below —
+// in the consolidated loadDashboardStats() further below -
 // this used to be a second, separate writer to the same
 // #studentCount element, racing with two others.)
 
@@ -695,7 +712,7 @@ async function saveStudent() {
         previousSchool: document.getElementById("previousSchool")?.value || "",
         attendance: document.getElementById("attendance").value
 
-        // Note: publishStatus is no longer set from here — each
+        // Note: publishStatus is no longer set from here - each
         // teacher now publishes/unpublishes a student's result
         // themselves from the marks entry screen (teacher.js).
         //
@@ -703,10 +720,10 @@ async function saveStudent() {
         // right here, before the try block even started. edit-student.html no
         // longer has a #month select (marks entry moved to teacher-marks.html),
         // so that line threw "Cannot read properties of null" on every single
-        // click — before any alert, before any Firestore call. That's why Save
+        // click - before any alert, before any Firestore call. That's why Save
         // Changes looked like it did nothing at all. The duplicate marks/results
         // write further down (which relied on the same missing #month and
-        // #marksEditor elements) has been removed for the same reason — marks
+        // #marksEditor elements) has been removed for the same reason - marks
         // are saved from teacher-marks.html now, not from here.
 
     };
@@ -924,7 +941,7 @@ window.deleteStudent = deleteStudent;
 // further below) all writing to the same #studentCount /
 // #teacherCount / #classCount elements independently. Because
 // each did its own network round trip, whichever one finished
-// LAST won — and loadSchoolStats() always finished by hard-
+// LAST won - and loadSchoolStats() always finished by hard-
 // coding teacherCount to "0" and classCount to "13", no matter
 // what the real data was. That's why Teacher count would
 // briefly flash the real value (1) and then flip back to 0.
@@ -955,7 +972,27 @@ function animateCountUp(el, target) {
 }
 window.animateCountUp = animateCountUp;
 
+// Makes sure every teacher in the list has an access record the security
+// rules can check. Safe to run repeatedly.
+async function syncTeacherAccounts() {
+    try {
+        const snap = await getDocs(collection(db, "teachers"));
+        for (const d of snap.docs) {
+            const t = d.data();
+            const email = String(t.email || "").toLowerCase();
+            if (!email) continue;
+            await setDoc(doc(db, "teacherAccounts", email), {
+                teacherId: d.id,
+                ...(t.authUid ? { authUid: t.authUid } : {})
+            }, { merge: true });
+        }
+    } catch (e) {
+        console.error("Teacher access sync failed:", e);
+    }
+}
+
 async function loadDashboardStats() {
+    syncTeacherAccounts();
 
     const studentBox = document.getElementById("studentCount");
     const teacherBox = document.getElementById("teacherCount");
@@ -1005,7 +1042,7 @@ function loadAdminLastLogin() {
 loadAdminLastLogin();
 
 // ==========================
-// Login Activity (login-activity.html) — every student, teacher
+// Login Activity (login-activity.html) - every student, teacher
 // and admin login, newest first. Also a small per-role summary.
 // ==========================
 async function loadLoginActivity() {
@@ -1209,7 +1246,7 @@ document.getElementById("teacherExperience").value
 document.getElementById("teacherStatus").value,
 
     // BUG FIX: the form has Address, Date of Joining, Date of
-    // Birth and Gender fields, but none of these were ever saved —
+    // Birth and Gender fields, but none of these were ever saved -
     // they were collected on screen and then silently discarded.
     address:
 document.getElementById("teacherAddress")?.value.trim() || "",
@@ -1239,6 +1276,12 @@ document.getElementById("teacherGender")?.value || "",
             { merge: true }
 
         );
+
+        // Firestore rules identify a teacher by this document (keyed by email).
+        await setDoc(doc(db, "teacherAccounts", teacherEmail.toLowerCase()), {
+            teacherId: teacherId,
+            ...(authUid ? { authUid } : {})
+        }, { merge: true });
 
         alert("Teacher Added Successfully. Yeh teacher ab isi email/password se login kar sakta hai.");
 
@@ -1304,13 +1347,13 @@ async function loadTeacherTable(){
                 <td data-label="Phone">${escapeHtmlAdmin(teacher.phone || "-")}</td>
                 <td data-label="Action">
                   <div class="action-btns">
-                    <button class="btn-view" onclick="viewTeacher('${docSnap.id}')">
+                    <button class="btn-view" onclick="viewTeacher(${jsq(docSnap.id)})">
                       <i class="fa-regular fa-eye"></i> View
                     </button>
-                    <button class="btn-edit" onclick="editTeacher('${docSnap.id}')">
+                    <button class="btn-edit" onclick="editTeacher(${jsq(docSnap.id)})">
                       <i class="fa-solid fa-pen"></i> Edit
                     </button>
-                    <button class="btn-delete" onclick="deleteTeacher('${docSnap.id}')">
+                    <button class="btn-delete" onclick="deleteTeacher(${jsq(docSnap.id)})">
                       <i class="fa-solid fa-trash"></i> Delete
                     </button>
                   </div>
@@ -1398,6 +1441,12 @@ async function deleteTeacher(id){
     if(!confirmDelete) return;
 
     try{
+
+        try {
+            const tSnap = await getDoc(doc(db,"teachers",id));
+            const tEmail = tSnap.exists() ? String(tSnap.data().email || "").toLowerCase() : "";
+            if (tEmail) await deleteDoc(doc(db,"teacherAccounts",tEmail));
+        } catch (e) { console.error("teacherAccounts cleanup failed", e); }
 
         await deleteDoc(
 
@@ -1653,7 +1702,7 @@ showSchoolName();
 
 
 // (Teacher count for the dashboard card is now handled once,
-// inside the consolidated loadDashboardStats() above — this
+// inside the consolidated loadDashboardStats() above - this
 // used to be a third, separate writer to #teacherCount.)
 
 // ==========================
@@ -1821,7 +1870,7 @@ setTxt("profileSubject", teacher.subject, "-");
 setTxt("prEmail", teacher.email, "-");
 setTxt("prMobile", teacher.phone, "-");
 // profileAssigned (Classes Assigned) is filled in by computeTeacherStats()
-// below, once we know which classes actually match this teacher's email —
+// below, once we know which classes actually match this teacher's email -
 // BUG FIX: this used to just repeat the teacher's subject here, which
 // isn't the same thing as which classes they're assigned to.
 
@@ -1865,7 +1914,7 @@ loadTeacherProfileDetails();
 }
 
 // ==========================
-// Teacher Profile — live stat cards
+// Teacher Profile - live stat cards
 // (Classes Assigned / Students / Attendance / Assignments / Rating)
 // ==========================
 async function computeTeacherStats(id, teacher) {
@@ -1879,7 +1928,7 @@ async function computeTeacherStats(id, teacher) {
   try {
 
     // Classes this teacher is the class-teacher for (matched by email,
-    // same join used everywhere else in this app — see loadClassesTable).
+    // same join used everywhere else in this app - see loadClassesTable).
     let classIds = [];
     let classNames = [];
 
@@ -1918,13 +1967,13 @@ async function computeTeacherStats(id, teacher) {
     console.error("Could not compute teacher stats:", error);
   }
 
-  // Attendance % — this is the value admin sets from Edit Profile
+  // Attendance % - this is the value admin sets from Edit Profile
   // (there's no separate attendance-tracking system for teachers yet).
   if (statAttendance) {
     statAttendance.textContent = teacher.attendance ? `${teacher.attendance}%` : "-";
   }
 
-  // Rating — no rating system exists yet, so this only shows something
+  // Rating - no rating system exists yet, so this only shows something
   // once a "rating" field is present on the teacher doc; otherwise it
   // honestly shows "New" rather than making up a number.
   if (statRating) {
@@ -1934,10 +1983,10 @@ async function computeTeacherStats(id, teacher) {
 }
 
 // ==========================
-// Teacher Profile — Recent Activities
+// Teacher Profile - Recent Activities
 // Built from real actions (attendance marked, homework posted, marks
 // updated) instead of being hardcoded. Each source is queried and
-// failed independently — a missing Firestore index on one type (the
+// failed independently - a missing Firestore index on one type (the
 // console will offer a one-click link to create it the first time
 // this runs) won't blank out the whole feed.
 // ==========================
@@ -2058,7 +2107,7 @@ async function loadRecentActivities(teacherId) {
 }
 
 // ==========================
-// Teacher Profile — Change Password
+// Teacher Profile - Change Password
 // Sends the same kind of reset link the teacher's own
 // "Change Password" button sends, just triggered by the admin.
 // ==========================
@@ -2085,7 +2134,7 @@ async function changeTeacherPassword() {
 window.changeTeacherPassword = changeTeacherPassword;
 
 // ==========================
-// Teacher Profile — Photo Upload
+// Teacher Profile - Photo Upload
 // Same Storage + Firestore pattern as the Gallery uploader:
 // upload the file, get its download URL, save that URL on the
 // teacher's doc, then refresh the avatar on screen immediately.
@@ -2108,7 +2157,7 @@ async function uploadTeacherProfilePhoto(fileInput) {
 
   try {
 
-    const storagePath = `teacherPhotos/${id}_${Date.now()}_${file.name}`;
+    const storagePath = `teacherPhotos/${safeFileName(id)}_${Date.now()}_${safeFileName(file.name)}`;
     const fileRef = ref(storage, storagePath);
 
     await uploadBytes(fileRef, file);
@@ -2310,7 +2359,7 @@ if (btn) {
         }
 
         // SECURITY: this page is the ADMIN's forgot-password flow only.
-        // Only the registered admin email may receive a reset link — otherwise
+        // Only the registered admin email may receive a reset link - otherwise
         // anyone could type in any teacher's (or a guessed) email here and
         // trigger a password-reset email against that account. Reject before
         // ever calling Firebase.
@@ -2363,14 +2412,14 @@ if (classesTableBody) {
   loadClassesTable();
 }
 
-// BUG FIX — "Total Students" on All Classes was always 0:
+// BUG FIX - "Total Students" on All Classes was always 0:
 // Add Student's Class <select> options (e.g. "Class 3") have no
 // explicit value="", so the browser submits the option's visible
 // text, and student.class gets saved as the full string "Class 3".
 // The class document's own id/key (set via "Class Key" in Add New
 // Class) is usually just "3". "Class 3" !== "3", so the exact-match
 // lookup below always missed. This normalizer strips "Class "
-// (any case) and trims, so both sides compare on the same key —
+// (any case) and trims, so both sides compare on the same key -
 // works for existing students too, no data migration needed.
 function classKeyNormalized(value) {
   return String(value || "").trim().toLowerCase().replace(/^class\s*/, "");
@@ -2452,8 +2501,8 @@ function renderClassRows(rows) {
         <div class="class-name-cell">
           <div class="class-icon-badge"><i class="fa-solid ${icon}"></i></div>
           <div class="class-name-text">
-            <strong>${c.className || c.id}</strong>
-            <small>${c.wing || ""}</small>
+            <strong>${escapeHtmlAdmin(c.className || c.id)}</strong>
+            <small>${escapeHtmlAdmin(c.wing || "")}</small>
           </div>
         </div>
       </td>
@@ -2461,21 +2510,21 @@ function renderClassRows(rows) {
       <td data-label="Section(s)">${sectionBadges}</td>
 
       <td data-label="Class Teacher" class="teacher-cell">
-        <strong>${c.teacherName || "-"}</strong>
-        <small>${c.teacherEmail || ""}</small>
+        <strong>${escapeHtmlAdmin(c.teacherName || "-")}</strong>
+        <small>${escapeHtmlAdmin(c.teacherEmail || "")}</small>
       </td>
 
       <td data-label="Total Students">${c.studentCount}</td>
 
       <td data-label="Action">
         <div class="action-btns">
-          <button class="btn-view" onclick="viewClass('${c.id}')">
+          <button class="btn-view" onclick="viewClass(${jsq(c.id)})">
             <i class="fa-regular fa-eye"></i> View
           </button>
-          <button class="btn-edit" onclick="openClassModal('${c.id}')">
+          <button class="btn-edit" onclick="openClassModal(${jsq(c.id)})">
             <i class="fa-solid fa-pen"></i> Edit
           </button>
-          <button class="btn-delete" onclick="deleteClass('${c.id}')">
+          <button class="btn-delete" onclick="deleteClass(${jsq(c.id)})">
             <i class="fa-solid fa-trash"></i> Delete
           </button>
         </div>
@@ -2679,10 +2728,10 @@ window.deleteClass = deleteClass;
 // Shared helper
 // ==========================
 // ==========================
-// Admin — Change Password (change-password.html)
+// Admin - Change Password (change-password.html)
 // Same pattern as changeTeacherPassword(): send a Firebase reset
 // link, this time to the admin's own registered email. No arbitrary
-// email input here — admin is already authenticated, so it always
+// email input here - admin is already authenticated, so it always
 // targets their own account.
 // ==========================
 async function changeAdminPassword() {
@@ -2702,7 +2751,7 @@ async function changeAdminPassword() {
 window.changeAdminPassword = changeAdminPassword;
 
 // ==========================
-// Publish Result — admin overview (publish-result.html)
+// Publish Result - admin overview (publish-result.html)
 // Marks are entered per-teacher on teacher-marks.html; this page just
 // gives admin visibility into every student's publish status, with an
 // override toggle for convenience (same students/{roll}.publishStatus
@@ -2740,7 +2789,7 @@ async function loadPublishOverview() {
                 <td data-label="Status"><span class="${isPublished ? "status-active" : "status-inactive"}">${isPublished ? "Published" : "Unpublished"}</span></td>
                 <td data-label="Action">
                     <div class="action-btns">
-                        <button class="${isPublished ? "btn-delete" : "btn-view"}" onclick="toggleStudentPublish('${r.roll}', '${isPublished ? "unpublished" : "published"}')">
+                        <button class="${isPublished ? "btn-delete" : "btn-view"}" onclick="toggleStudentPublish(${jsq(r.roll)}, ${jsq(isPublished ? "unpublished" : "published")})">
                             <i class="fa-solid ${isPublished ? "fa-eye-slash" : "fa-upload"}"></i> ${isPublished ? "Unpublish" : "Publish"}
                         </button>
                     </div>
@@ -2775,7 +2824,7 @@ function searchPublishOverview() {
 window.searchPublishOverview = searchPublishOverview;
 
 // ==========================
-// Marks & Subjects — read-only reference (marks-management.html)
+// Marks & Subjects - read-only reference (marks-management.html)
 // classSubjects / max-marks live as constants in this file (not
 // Firestore), so this page just displays what's currently configured.
 // ==========================
@@ -2805,7 +2854,7 @@ function loadMarksReference() {
 loadMarksReference();
 
 // ==========================
-// Attendance Overview — admin (attendance-overview.html)
+// Attendance Overview - admin (attendance-overview.html)
 // Attendance is marked per-student, per-day by teachers at
 // students/{roll}/attendance/{date}. This aggregates that across
 // every student for a chosen month using a collectionGroup query.
@@ -2893,6 +2942,26 @@ function escapeHtmlAdmin(str) {
     .replaceAll('"', "&quot;");
 }
 
+// Only allow https image links. Blocks javascript: and data: URLs that
+// would otherwise be written into an src/href attribute.
+function safeHttpsUrl(u) {
+  try {
+    const url = new URL(String(u || ""), window.location.href);
+    return url.protocol === "https:" ? url.href : "";
+  } catch (e) { return ""; }
+}
+
+// Keep uploaded file names to plain characters so a crafted name cannot
+// escape the intended storage folder.
+function safeFileName(name) {
+  return String(name || "file").replace(/[^A-Za-z0-9._-]/g, "_").slice(-80) || "file";
+}
+
+// Safe value for use inside an inline onclick="..." attribute.
+function jsq(v) {
+  return escapeHtmlAdmin(JSON.stringify(String(v === undefined || v === null ? "" : v)));
+}
+
 // =========================================================
 // NOTICE MANAGEMENT (notices.html)
 // =========================================================
@@ -2965,10 +3034,10 @@ function renderNoticeRows(rows) {
       <td data-label="Description">${escapeHtmlAdmin(shortDesc)}</td>
       <td data-label="Action">
         <div class="action-btns">
-          <button class="btn-edit" onclick="openNoticeModal('${n.id}')">
+          <button class="btn-edit" onclick="openNoticeModal(${jsq(n.id)})">
             <i class="fa-solid fa-pen"></i> Edit
           </button>
-          <button class="btn-delete" onclick="deleteNotice('${n.id}')">
+          <button class="btn-delete" onclick="deleteNotice(${jsq(n.id)})">
             <i class="fa-solid fa-trash"></i> Delete
           </button>
         </div>
@@ -3138,10 +3207,10 @@ function renderGalleryGrid(rows) {
 
   galleryGridBox.innerHTML = rows.map((g) => `
     <div class="gallery-thumb">
-      <img src="${g.imageUrl}" alt="${escapeHtmlAdmin(g.title || g.category || "Gallery photo")}" loading="lazy">
+      <img src="${escapeHtmlAdmin(safeHttpsUrl(g.imageUrl))}" alt="${escapeHtmlAdmin(g.title || g.category || "Gallery photo")}" loading="lazy">
       <div class="gallery-thumb-overlay">
         <span class="gallery-thumb-category">${escapeHtmlAdmin(g.category || "")}</span>
-        <button class="gallery-thumb-delete" onclick="deleteGalleryPhoto('${g.id}')" aria-label="Delete photo">
+        <button class="gallery-thumb-delete" onclick="deleteGalleryPhoto(${jsq(g.id)})" aria-label="Delete photo">
           <i class="fa-solid fa-trash"></i>
         </button>
       </div>
@@ -3187,7 +3256,7 @@ async function saveGalleryPhoto() {
 
   try {
 
-    const storagePath = `gallery/${Date.now()}_${file.name}`;
+    const storagePath = `gallery/${Date.now()}_${safeFileName(file.name)}`;
     const fileRef = ref(storage, storagePath);
 
     await uploadBytes(fileRef, file);
@@ -3251,7 +3320,7 @@ window.deleteGalleryPhoto = deleteGalleryPhoto;
 // =========================================================
 
 // ----- Payment Settings (School UPI ID for the Parent Portal's
-// Pay Now button — stored once, shared by every student) -----
+// Pay Now button - stored once, shared by every student) -----
 
 const schoolUpiIdField = document.getElementById("schoolUpiId");
 
@@ -3358,7 +3427,7 @@ function renderFeeClassRows(rows) {
       <td data-label="Frequency">${escapeHtmlAdmin(c.feeFrequency || "-")}</td>
       <td data-label="Action">
         <div class="action-btns">
-          <button class="btn-edit" onclick="openFeeStructureModal('${c.id}')">
+          <button class="btn-edit" onclick="openFeeStructureModal(${jsq(c.id)})">
             <i class="fa-solid fa-pen"></i> Set Fee
           </button>
         </div>
@@ -3495,8 +3564,8 @@ async function searchFeeStudent() {
           ? ""
           : `
             <div class="action-btns" style="margin-top:6px;">
-              <button class="btn-edit" onclick="verifyPayment('${roll}', '${p.id}')"><i class="fa-solid fa-check"></i> Verify</button>
-              <button class="btn-delete" onclick="rejectPayment('${roll}', '${p.id}')"><i class="fa-solid fa-xmark"></i> Reject</button>
+              <button class="btn-edit" onclick="verifyPayment(${jsq(roll)}, ${jsq(p.id)})"><i class="fa-solid fa-check"></i> Verify</button>
+              <button class="btn-delete" onclick="rejectPayment(${jsq(roll)}, ${jsq(p.id)})"><i class="fa-solid fa-xmark"></i> Reject</button>
             </div>
           `;
         const noteText = trusted
@@ -3514,10 +3583,10 @@ async function searchFeeStudent() {
       });
     }
 
-    // Month-by-month due, anchored to admission date — same logic
+    // Month-by-month due, anchored to admission date - same logic
     // (and same fee-utils.js module) the Parent Portal uses, so
     // admin and parent never disagree on what's outstanding. Only
-    // VERIFIED payments count as totalPaid here — a parent simply
+    // VERIFIED payments count as totalPaid here - a parent simply
     // clicking through the Pay Now flow does not, by itself, clear
     // a due period until admin verifies it below.
     const periods = generateBillingPeriods(student.admissionDate, feeFrequency, feeAmount);
@@ -3571,7 +3640,7 @@ async function searchFeeStudent() {
             `;
           }
           const badge = p.status === "partial"
-            ? `<span class="status-inactive">Partially Paid — Due ₹${p.amountDue}</span>`
+            ? `<span class="status-inactive">Partially Paid - Due ₹${p.amountDue}</span>`
             : `<span class="status-inactive">Due ₹${p.amountDue}</span>`;
           return `
             <div class="fee-period-row ${p.status}">
@@ -3687,7 +3756,7 @@ window.savePayment = savePayment;
 
 // ==========================================================
 // Verify / Reject a parent-self-reported payment
-// (Fee Ledger — payments with source: "parent_portal" sit as
+// (Fee Ledger - payments with source: "parent_portal" sit as
 // "Pending Verification" until admin acts on them here. Only
 // after Verify does the amount count toward that student's
 // Paid total / clear the corresponding due period.)

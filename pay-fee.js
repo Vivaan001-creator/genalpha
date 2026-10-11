@@ -35,7 +35,7 @@ function buildUpiLink({ upiId, payeeName, amount, note }) {
 }
 
 // ==========================================================
-// Session guard — this page only makes sense inside a parent
+// Session guard - this page only makes sense inside a parent
 // session (it always returns to parent-dashboard.html).
 // ==========================================================
 if (localStorage.getItem("parentLoggedIn") !== "true") {
@@ -81,7 +81,7 @@ async function init() {
 
   const student = studentSnap.data();
 
-  // Re-derive everything fresh from Firestore — the amount is
+  // Re-derive everything fresh from Firestore - the amount is
   // NEVER read from the URL, so it can't be edited by changing
   // the link.
   const classData = await findClassDoc(student.class);
@@ -125,7 +125,7 @@ async function init() {
         <div class="pay-icon"><i class="fa-solid fa-circle-check"></i></div>
         <div class="pay-who">${escapeHtml(student.name || roll)} · Roll ${escapeHtml(roll)}</div>
         <div class="pay-period">${escapeHtml(period.label)}</div>
-        <p class="pay-confirm-hint">Yeh payment already ho chuka hai — kuch aur karne ki zaroorat nahi.</p>
+        <p class="pay-confirm-hint">Yeh payment already ho chuka hai - kuch aur karne ki zaroorat nahi.</p>
         <a href="parent-dashboard.html" class="pay-back" style="justify-content:center;">
           <i class="fa-solid fa-arrow-left"></i> Dashboard par jaayein
         </a>
@@ -151,7 +151,7 @@ async function init() {
 
   const amountDue = period.amountDue;
 
-  // Payment settings (UPI VPA) — admin-configured, read-only here.
+  // Payment settings (UPI VPA) - admin-configured, read-only here.
   let upiId = "";
   let payeeName = "Modern International School";
   try {
@@ -169,7 +169,7 @@ async function init() {
       <div class="pay-card">
         <div class="pay-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
         <div class="pay-who">${escapeHtml(student.name || roll)} · Roll ${escapeHtml(roll)}</div>
-        <div class="pay-period">${escapeHtml(period.label)} — Due ₹${amountDue}</div>
+        <div class="pay-period">${escapeHtml(period.label)} - Due ₹${amountDue}</div>
         <p class="pay-confirm-hint">School ne abhi online (UPI) payment set up nahi kiya hai. Kripya school office mein sampark karke payment karein.</p>
       </div>
     `;
@@ -200,7 +200,7 @@ async function init() {
       <div class="pay-divider"><span class="line"></span><span>PHIR</span><span class="line"></span></div>
 
       <p class="pay-confirm-hint">
-        UPI app mein payment poora karne ke baad hi neeche wala button dabayein. Yeh payment turant "Paid" nahi dikhega —
+        UPI app mein payment poora karne ke baad hi neeche wala button dabayein. Yeh payment turant "Paid" nahi dikhega -
         <strong>school admin verify karega</strong> (apne bank/UPI statement se match karke), uske baad hi status "Paid" mein badlega.
       </p>
 
@@ -218,7 +218,7 @@ async function init() {
   // Soft nudge: the report step only unlocks after the parent has
   // actually opened the UPI app at least once from this page. This
   // is NOT a security check (clicking the link doesn't prove the
-  // payment went through) — the real safeguard is that this write
+  // payment went through) - the real safeguard is that this write
   // is marked verified:false and excluded from Paid/Due math until
   // an admin confirms it.
   upiBtn.addEventListener("click", () => {
@@ -234,7 +234,7 @@ async function init() {
         amount: amountDue,
         date: Timestamp.now(),
         mode: "UPI",
-        note: `Self-reported via Parent Portal — ${period.label}`,
+        note: `Self-reported via Parent Portal - ${period.label}`,
         source: "parent_portal",
         periodKey: period.key,
         verified: false,

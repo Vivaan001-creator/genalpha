@@ -1,52 +1,71 @@
 /* =========================================================
-   session-timer.js — persistent login guard (Android app build)
+   session-timer.js - login guard for every protected page.
 
-   ANDROID APP CHANGE: the old version force-logged everyone out
-   after 20 minutes (countdown banner + expiry overlay). For the
-   app, login should persist until the user taps Logout — so all
-   of that has been removed. This file now does ONE thing: if
-   nobody is logged in, it bounces the page to loginUrl. That's
-   it. No timer, no countdown, no auto-logout.
+   Old behaviour: only checked a localStorage flag. Anyone could
+   open DevTools, run localStorage.setItem('adminLoggedIn','true')
+   and see the admin screens.
 
-   Login itself now lives in localStorage (not sessionStorage),
-   which is what makes it survive closing and reopening the app.
+   New behaviour:
+   - The page stays hidden until the check finishes.
+   - Admin and teacher pages also require a real Firebase Auth
+     session. Admin pages additionally require the admin account.
+   - Student and parent pages still use the flag, because those
+     logins are not Firebase accounts yet (see SECURITY-REPORT.md).
 
-   Usage is unchanged from before, so no other file needed to
-   change just because of this:
+   IMPORTANT: this is a usability guard. The real protection for
+   your data is the Firestore and Storage rules in firestore.rules and storage.rules.
 
+   Usage is unchanged:
      SessionTimer.start({ flagKey: 'adminLoggedIn', loginUrl: 'admin.html' });
-
-   For pages reachable by more than one role (result.html,
-   pay-fee.html) pass an array instead:
-
      SessionTimer.start({ flagKeys: ['parentLoggedIn','studentLoggedIn'], loginUrl: 'student-login.html' });
 ========================================================= */
 (function () {
+  var ADMIN_EMAIL = "vivaan510399@gmail.com";
+  var FIREBASE_AUTH_URL = "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
   function start(opts) {
     opts = opts || {};
-    const flagKeys = Array.isArray(opts.flagKeys) ? opts.flagKeys : [opts.flagKey];
-    const loginUrl = opts.loginUrl;
+    var flagKeys = Array.isArray(opts.flagKeys) ? opts.flagKeys : [opts.flagKey];
+    var loginUrl = opts.loginUrl;
+    var needsAdmin = flagKeys.indexOf("adminLoggedIn") !== -1;
+    var needsTeacher = flagKeys.indexOf("teacherLoggedIn") !== -1;
+    var needsFirebase = needsAdmin || needsTeacher;
 
-    function isLoggedIn() {
+    var root = document.documentElement;
+    var wasHidden = root.style.visibility;
+
+    function flagOk() {
       return flagKeys.some(function (k) { return localStorage.getItem(k) === "true"; });
     }
-    function guardOrBounce() {
-      if (!isLoggedIn()) {
-        window.location.replace(loginUrl);
-        return false;
-      }
-      return true;
+    function deny() {
+      if (needsAdmin) { try { localStorage.removeItem("adminLoggedIn"); } catch (e) {} }
+      if (needsTeacher) { try { localStorage.removeItem("teacherLoggedIn"); } catch (e) {} }
+      window.location.replace(loginUrl);
     }
+    function allow() { root.style.visibility = wasHidden; }
 
-    guardOrBounce();
+    if (!flagOk()) { deny(); return; }
+    if (!needsFirebase) { return; }
 
-    // Re-check when the page is restored from bfcache (e.g. the
-    // Android back button) — this still matters, since a manual
-    // Logout in one tab/webview should still be respected here.
-    window.addEventListener("pageshow", function () {
-      guardOrBounce();
+    root.style.visibility = "hidden";
+    Promise.all([import("./Firebase.js"), import(FIREBASE_AUTH_URL)])
+      .then(function (mods) {
+        var auth = mods[0].auth;
+        var onAuthStateChanged = mods[1].onAuthStateChanged;
+        var unsub = onAuthStateChanged(auth, function (user) {
+          unsub();
+          if (!user) { deny(); return; }
+          if (needsAdmin && (user.email || "").toLowerCase() !== ADMIN_EMAIL) { deny(); return; }
+          allow();
+        });
+      })
+      .catch(function () { deny(); });
+
+    // bfcache restores (Android back button) skip load, so re-check the flag.
+    window.addEventListener("pageshow", function (e) {
+      if (e.persisted && !flagOk()) { deny(); }
     });
   }
 
-  window.SessionTimer = { start };
+  window.SessionTimer = { start: start };
 })();

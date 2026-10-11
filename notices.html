@@ -1,11 +1,19 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en-IN">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self' mailto:">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="description" content="Create and manage notices for students and parents.">
+<meta name="theme-color" content="#0e1326">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="site.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script src="appearance.js"></script>
 <script src="session-timer.js"></script>
-<title>Notice Board - Home Tuition</title>
+<title>Notice Board - GenAlpha</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -74,7 +82,7 @@
   .btn-add-class{
     display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer;
     background:linear-gradient(135deg, var(--amber) 0%, var(--coral) 100%); color:#241608;
-    font-weight:700; font-size:13.5px; font-family:inherit; padding:12px 22px; border-radius:999px;
+    font-weight:700; font-size:13.5px; font-family:inherit; padding:12px 22px; border-radius:12px;
     box-shadow:0 4px 0 var(--amber-shadow), 0 10px 22px rgba(255,140,66,.28);
     transition:transform .15s var(--ease), box-shadow .15s var(--ease);
   }
@@ -120,7 +128,7 @@
   .quick-tips-text h3{ font-size:15px; display:flex; align-items:center; gap:8px; margin-bottom:12px; color:var(--amber); }
   .quick-tips-text ul{ list-style:none; display:flex; flex-direction:column; gap:7px; }
   .quick-tips-text li{ font-size:12.5px; color:#c7cbe0; line-height:1.5; padding-left:16px; position:relative; }
-  .quick-tips-text li::before{ content:'—'; position:absolute; left:0; color:var(--amber); }
+  .quick-tips-text li::before{ content:'-'; position:absolute; left:0; color:var(--amber); }
   .quick-tips-illustration{ font-size:52px; color:rgba(255,179,71,.25); flex-shrink:0; }
 
   .footer{ text-align:center; font-size:12px; color:var(--ink-faint); padding:10px 0 6px; }
@@ -139,7 +147,7 @@
   .field input, .field select{ padding:11px 14px; border:1.5px solid rgba(36,31,20,.1); border-radius:12px; font-size:13.5px; font-family:inherit; background:var(--paper); color:var(--ink); transition:border-color .2s var(--ease); }
   .field input:focus, .field select:focus{ outline:none; border-color:var(--amber-deep); }
   .modal-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
-  .btn{ display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer; font-family:inherit; font-size:13px; font-weight:700; padding:11px 20px; border-radius:999px; transition:transform .15s var(--ease); }
+  .btn{ display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer; font-family:inherit; font-size:13px; font-weight:700; padding:11px 20px; border-radius:12px; transition:transform .15s var(--ease); }
   .btn-primary{ background:linear-gradient(135deg, var(--amber) 0%, var(--coral) 100%); color:#241608; box-shadow:0 4px 0 var(--amber-shadow), 0 10px 20px rgba(255,140,66,.28); }
   .btn-primary:hover{ transform:translateY(-2px); }
   .btn-secondary{ background:var(--paper); color:var(--ink-soft); border:1.5px solid rgba(36,31,20,.09); }
@@ -221,13 +229,14 @@
         <ul>
           <li>Naya notice sabhi students/parents ke dashboard par turant dikhega.</li>
           <li>Edit karne ke liye kisi bhi notice par "Edit" click karein.</li>
-          <li>Description short rakhein — poora notice students ke Notice Board par khulta hai.</li>
+          <li>Description short rakhein - poora notice students ke Notice Board par khulta hai.</li>
         </ul>
       </div>
       <div class="quick-tips-illustration"><i class="fa-regular fa-bell"></i></div>
     </section>
 
-    <footer class="footer">Made with care, one student at a time. © 2026 GenAlpha.</footer>
+    <footer class="footer"><nav class="footer-links" aria-label="Legal"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="cookies.html">Cookies</a><a href="refund.html">Refunds</a></nav><div>&copy; <span data-year>2026</span> GenAlpha</div></footer>
+<script src="site.js"></script>
   </div>
 </div>
 

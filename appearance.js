@@ -1,12 +1,12 @@
 /* =========================================================
-   appearance.js — one-tap Light/Dark toggle for the whole
+   appearance.js - one-tap Light/Dark toggle for the whole
    GenAlpha app.
 
    ANDROID APP CHANGE: this used to open a small dropdown with
    three choices (System / Light / Dark). That menu was also
    getting visually clipped on pages whose header uses
    overflow:hidden (it opens upward, above the button, and got
-   cut off — that's why tapping it looked like nothing
+   cut off - that's why tapping it looked like nothing
    happened). Fixed by removing the dropdown entirely: the
    button now just toggles between light and dark directly on
    tap, one icon, no panel to clip.
@@ -19,17 +19,17 @@
        Appearance.renderMenu(document.getElementById('appearanceMount'));
 
    (The `variant` and `{variant:'inline'|'corner'}` options from
-   the old version still work as plain no-ops — pages that pass
+   the old version still work as plain no-ops - pages that pass
    them keep working unchanged.)
 
    The chosen theme (light / dark) is saved in localStorage and
-   applied on every page automatically — pick it once anywhere,
+   applied on every page automatically - pick it once anywhere,
    it sticks everywhere. On a person's very first visit, before
    they've tapped the button even once, it follows the phone's
    own system light/dark setting.
 ========================================================= */
 (function () {
-  const STORAGE_KEY = 'appearance-theme'; // 'light' | 'dark' (no 'system' choice anymore — see note above)
+  const STORAGE_KEY = 'appearance-theme'; // 'light' | 'dark' (no 'system' choice anymore - see note above)
   const root = document.documentElement;
 
   function systemPrefersDark() {
@@ -46,7 +46,7 @@
     root.setAttribute('data-theme', theme);
   }
 
-  // Apply immediately — this file must be loaded early (head) to avoid a flash.
+  // Apply immediately - this file must be loaded early (head) to avoid a flash.
   apply(getTheme());
 
   function setTheme(theme) {
@@ -84,7 +84,7 @@
     document.head.appendChild(style);
   }
 
-  function renderMenu(mountEl /*, opts — accepted for backwards compatibility, unused */) {
+  function renderMenu(mountEl /*, opts - accepted for backwards compatibility, unused */) {
     if (!mountEl) return;
     injectStyles();
 

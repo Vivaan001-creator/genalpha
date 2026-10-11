@@ -14,7 +14,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 // ==========================================================
-// Date helper — accepts dd-mm-yyyy OR yyyy-mm-dd and returns
+// Date helper - accepts dd-mm-yyyy OR yyyy-mm-dd and returns
 // a canonical yyyy-mm-dd string so login comparison works
 // regardless of which format was typed / picked.
 // ==========================================================
@@ -56,7 +56,7 @@ function formatDateNice(value) {
 // Student / Parent Login (Roll Number + Date of Birth)
 //
 // NOTE on security: this checks the roll+DOB pair against the
-// "students" collection directly from the client — there is no
+// "students" collection directly from the client - there is no
 // Firebase Auth account per student. That means your Firestore
 // rules must allow read access to a student doc for this check
 // to work, which also means DOB alone is a soft guard, not a
@@ -94,11 +94,11 @@ async function studentLogin() {
       return;
     }
 
-    // Login tracking — a record admin can review, plus this account's own
+    // Login tracking - a record admin can review, plus this account's own
     // last-login shown on the student's dashboard. Never blocks the login
     // itself if tracking happens to fail (e.g. a rules/network hiccup).
     try {
-      // Capture the PREVIOUS login time before we overwrite it — this is
+      // Capture the PREVIOUS login time before we overwrite it - this is
       // what "Last Login" should show (the time before this current visit),
       // not the timestamp we're about to write for this very login.
       const previousLogin = student.lastLogin
@@ -174,7 +174,7 @@ function isLowerClass(classValue) {
 
 // ==========================================================
 // Grade + Teacher's Comment (ported from the original
-// result.js design — same percentage boundaries and wording)
+// result.js design - same percentage boundaries and wording)
 // ==========================================================
 function gradeForPercentage(pct) {
   if (pct >= 90) return "A1";
@@ -364,7 +364,7 @@ async function loadStudentResult(roll, student, month) {
   // BUG FIX: this used to iterate Object.entries(data) directly,
   // which also renders bookkeeping fields saved on the same result
   // document (updatedBy, updatedAt, studentRoll, ...) as if they
-  // were subjects — a Firestore Timestamp shown as "marks" is what
+  // were subjects - a Firestore Timestamp shown as "marks" is what
   // produced huge garbled totals. Skip those known non-subject keys.
   const nonSubjectKeys = ["updatedBy", "updatedAt", "studentRoll", "publishedAt", "publishedBy", "publishStatus"];
 
@@ -455,7 +455,7 @@ async function loadStudentAttendance(roll, month) {
   if (!range) return;
 
   try {
-    // Plain, unfiltered collection read — this needs no composite
+    // Plain, unfiltered collection read - this needs no composite
     // index at all. Filtering by month and sorting happens below,
     // in JS, on the (small, per-student) result set. Attendance
     // docs are keyed by yyyy-mm-dd, so string comparison works.
@@ -584,7 +584,7 @@ async function loadStudentNotices() {
 // ==========================================================
 // Fee Status (reads classes/{classId} for the fee structure
 // and students/{roll}/payments for this student's own payment
-// history — same data admin's Fee Management page writes)
+// history - same data admin's Fee Management page writes)
 // ==========================================================
 async function loadStudentFeeStatus(roll, student) {
   const summaryBox = document.getElementById("feeSummaryBox");

@@ -1,10 +1,10 @@
 /* =========================================================
-   bottom-nav.js — floating 5-icon bottom tab bar for the
+   bottom-nav.js - floating 5-icon bottom tab bar for the
    Android app shell (GenAlpha redesign).
 
    TWO MODES:
 
-   1) SAME-PAGE TABS (Student, Parent) — tabs switch which
+   1) SAME-PAGE TABS (Student, Parent) - tabs switch which
       [data-tab-section] is visible, no page reload:
 
      BottomNav.init({
@@ -16,7 +16,7 @@
        ]
      });
 
-   2) CROSS-PAGE LINKS (Teacher, Admin) — each tab is a real
+   2) CROSS-PAGE LINKS (Teacher, Admin) - each tab is a real
       page; give it href instead of id, and the tab matching
       the current filename lights up automatically:
 

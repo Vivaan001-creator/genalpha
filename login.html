@@ -1,7 +1,14 @@
 <!DOCTYPE html>
-<html lang="hi" data-theme="dark">
+<html lang="en-IN" data-theme="dark">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self' mailto:">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="description" content="Log in to GenAlpha as a student, parent, teacher or admin.">
+<meta name="theme-color" content="#0e1326">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="site.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script src="appearance.js"></script>
 <title>Log In - GenAlpha</title>
@@ -61,7 +68,7 @@
     display:inline-flex; align-items:center; justify-content:center; gap:10px;
     width:100%; max-width:340px; border:none; cursor:pointer; font-family:inherit;
     background:var(--brand-yellow); color:var(--brand-ink); font-size:15.5px; font-weight:700;
-    padding:17px 24px; border-radius:999px; box-shadow:0 12px 26px rgba(255,199,44,.28);
+    padding:17px 24px; border-radius:12px; box-shadow:0 12px 26px rgba(255,199,44,.28);
     transition:transform .15s var(--ease), box-shadow .15s var(--ease), opacity .3s var(--ease);
     animation:fadeUp .7s .4s var(--ease) both;
   }
@@ -116,7 +123,7 @@
   <img class="scene-logo" src="logo.png" alt="GenAlpha">
 </div>
 
-<p class="tagline">Ek jagah results, attendance, fees aur notices — sabke liye, aasaan tareeke se.</p>
+<p class="tagline">Ek jagah results, attendance, fees aur notices - sabke liye, aasaan tareeke se.</p>
 
 <button type="button" class="primary-btn" id="primaryLoginBtn">
   Log In <i class="fa-solid fa-arrow-right"></i>
@@ -155,7 +162,7 @@
 
   <p class="role-note">
     <i class="fa-solid fa-circle-info"></i>
-    <span>Teacher login only works once the Admin adds or updates them — that's when the password-setup link goes to their email.</span>
+    <span>Teacher login only works once the Admin adds or updates them - that's when the password-setup link goes to their email.</span>
   </p>
 </div>
 
@@ -170,5 +177,6 @@
   });
 </script>
 
+<nav class="legal-links" aria-label="Legal"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="cookies.html">Cookies</a><a href="refund.html">Refunds</a></nav>
 </body>
 </html>

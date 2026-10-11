@@ -2,10 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self' mailto:">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="description" content="Edit a teacher record.">
+<meta name="theme-color" content="#0e1326">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="site.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script src="appearance.js"></script>
 <script src="session-timer.js"></script>
-<title>Edit Teacher - Home Tuition</title>
+<title>Edit Teacher - GenAlpha</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -85,7 +93,7 @@
   .profile-hero-meta{ display:flex; gap:10px; flex-wrap:wrap; }
   .meta-chip{ display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); padding:6px 12px; border-radius:999px; font-size:12px; color:#e5e0cf; }
   .profile-hero-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-left:auto; }
-  .btn{ display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:700; padding:11px 18px; border-radius:999px; transition:transform .15s var(--ease), box-shadow .15s var(--ease); }
+  .btn{ display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:700; padding:11px 18px; border-radius:12px; transition:transform .15s var(--ease), box-shadow .15s var(--ease); }
   .btn-primary{ background:linear-gradient(135deg, var(--amber) 0%, var(--coral) 100%); color:#241608; box-shadow:0 4px 0 var(--amber-shadow), 0 10px 20px rgba(255,140,66,.28); }
   .btn-primary:hover{ transform:translateY(-2px); }
   .btn-secondary{ background:rgba(255,255,255,.08); color:#f3ecd9; border:1px solid rgba(255,255,255,.14); }
@@ -153,7 +161,7 @@
   .field input:focus, .field select:focus, .field textarea:focus{ outline:none; border-color:var(--amber-deep); }
   .field textarea{ resize:vertical; min-height:70px; }
   .save-section-btn{ margin-top:20px; display:flex; justify-content:flex-end; }
-  .btn{ display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer; font-family:inherit; font-size:13px; font-weight:700; padding:11px 22px; border-radius:999px; transition:transform .15s var(--ease); }
+  .btn{ display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer; font-family:inherit; font-size:13px; font-weight:700; padding:11px 22px; border-radius:12px; transition:transform .15s var(--ease); }
   .btn-primary{ background:linear-gradient(135deg, var(--amber) 0%, var(--coral) 100%); color:#241608; box-shadow:0 4px 0 var(--amber-shadow), 0 10px 20px rgba(255,140,66,.28); }
   .btn-primary:hover{ transform:translateY(-2px); }
 
@@ -213,7 +221,7 @@
         <input type="hidden" id="teacherExperience"><input type="hidden" id="teacherStatus">
       </section>
 
-      <!-- Professional Details — saved via saveTeacherProfileDetails() -->
+      <!-- Professional Details - saved via saveTeacherProfileDetails() -->
       <section class="form-card">
         <h3 class="section-title">Professional Details</h3>
         <div class="view-grid two-col">
@@ -323,5 +331,6 @@
 </script>
 
 <script type="module" src="admin.js"></script>
+<nav class="legal-links" aria-label="Legal"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="cookies.html">Cookies</a><a href="refund.html">Refunds</a></nav>
 </body>
 </html>

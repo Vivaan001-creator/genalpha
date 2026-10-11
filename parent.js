@@ -22,6 +22,11 @@ function escapeHtml(str) {
     .replaceAll('"', "&quot;");
 }
 
+// Safe value for use inside an inline onclick="..." attribute.
+function jsq(v) {
+  return escapeHtml(JSON.stringify(String(v === undefined || v === null ? "" : v)));
+}
+
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
@@ -97,7 +102,7 @@ function monthLabelToRange(label) {
 // Parent Login (Roll Number + Registered Mobile Number)
 //
 // Deliberately a DIFFERENT credential pair than student login
-// (which uses Roll + DOB) — this is what makes the Parent
+// (which uses Roll + DOB) - this is what makes the Parent
 // Portal "separate from student login" per login.html's own
 // description, and it doubles as the key used to find every
 // sibling registered under the same contact number.
@@ -177,7 +182,7 @@ function parentLogout() {
 window.parentLogout = parentLogout;
 
 // ==========================================================
-// Load Dashboard — profile, result, attendance, homework,
+// Load Dashboard - profile, result, attendance, homework,
 // notices and fee status for the currently active child, plus
 // a switcher for parents with more than one child in school.
 // ==========================================================
@@ -193,8 +198,8 @@ async function loadParentDashboard() {
   const contact = localStorage.getItem("parentContact");
   if (!contact) return;
 
-  // Always read fresh from Firestore — no locally-cached student
-  // data — so anything Admin edits/uploads shows up here immediately.
+  // Always read fresh from Firestore - no locally-cached student
+  // data - so anything Admin edits/uploads shows up here immediately.
   const childSnap = await getDocs(
     query(collection(db, "students"), where("contactNumber", "==", contact))
   );
@@ -229,7 +234,7 @@ function renderChildSwitcher(activeRoll) {
 
   section.style.display = "block";
   row.innerHTML = childrenCache.map((c) => `
-    <button type="button" class="child-chip ${c.roll === activeRoll ? "active" : ""}" onclick="switchChild('${c.roll}')">
+    <button type="button" class="child-chip ${c.roll === activeRoll ? "active" : ""}" onclick="switchChild(${jsq(c.roll)})">
       <i class="fa-solid fa-user"></i> ${escapeHtml(c.name || c.roll)}
     </button>
   `).join("");
@@ -368,7 +373,7 @@ async function loadChildAttendance(roll, month) {
 
 // ==========================================================
 // Homework (reads the top-level "homework" collection the
-// same way teacher.js writes it — scoped to the child's class,
+// same way teacher.js writes it - scoped to the child's class,
 // matched with the same normalized key used across the app so
 // "Class 3" on the student and "3" on the homework doc still
 // match up)
@@ -426,7 +431,7 @@ async function loadChildHomework(child) {
 
 // ==========================================================
 // Notice Board (reads the top-level "notices" collection,
-// same one notices.html on the admin side writes to — school-
+// same one notices.html on the admin side writes to - school-
 // wide, so it's identical regardless of which child is active)
 // ==========================================================
 async function loadNotices() {
@@ -480,7 +485,7 @@ async function loadNotices() {
 // ==========================================================
 // Fee Status (reads classes/{classId} for the fee structure
 // and students/{roll}/payments for this child's own payment
-// history — same data admin's Fee Management page writes)
+// history - same data admin's Fee Management page writes)
 // ==========================================================
 async function loadChildFeeStatus(roll, child) {
   const summaryBox = document.getElementById("feeSummaryBox");
@@ -535,13 +540,13 @@ async function loadChildFeeStatus(roll, child) {
       `;
     });
 
-    // Month-by-month due, anchored to admission date — falls back
+    // Month-by-month due, anchored to admission date - falls back
     // to the old single lump-sum view if admission date isn't set,
     // since there's nothing to anchor a month-wise breakdown to.
     const periods = generateBillingPeriods(child.admissionDate, feeFrequency, feeAmount);
     const periodsWithStatus = allocateDueStatus(periods, totalPaid).map((p) => {
       // A self-reported payment sitting in Firestore for this exact
-      // period, not yet trusted, shows as its own "pending" state —
+      // period, not yet trusted, shows as its own "pending" state -
       // NOT paid (that's the whole point) and not plain "due" either,
       // so a parent doesn't get prompted to pay twice.
       if (p.status !== "paid" && pendingByPeriod[p.key] > 0) {
@@ -581,7 +586,7 @@ async function loadChildFeeStatus(roll, child) {
       if (!feeAmount) {
         dueBox.innerHTML = "";
       } else if (periods.length === 0) {
-        // No admission date on file — can't anchor a month-wise
+        // No admission date on file - can't anchor a month-wise
         // breakdown, so just note that plainly instead of guessing.
         dueBox.innerHTML = `<p class="result-empty-msg">Admission Date set nahi hai, isliye month-wise due nahi dikhaya ja sakta. School office se sampark karein.</p>`;
       } else {
@@ -609,7 +614,7 @@ async function loadChildFeeStatus(roll, child) {
             `;
           }
           const badge = p.status === "partial"
-            ? `<span class="status-inactive">Partially Paid — Due ₹${p.amountDue}</span>`
+            ? `<span class="status-inactive">Partially Paid - Due ₹${p.amountDue}</span>`
             : `<span class="status-inactive">Due ₹${p.amountDue}</span>`;
           return `
             <div class="fee-period-row ${p.status}">
@@ -619,7 +624,7 @@ async function loadChildFeeStatus(roll, child) {
               </div>
               <div class="fee-period-status">
                 ${badge}
-                <button type="button" class="btn-pay-now" onclick="goToPayFee('${roll}', '${p.key}')">
+                <button type="button" class="btn-pay-now" onclick="goToPayFee(${jsq(roll)}, ${jsq(p.key)})">
                   <i class="fa-solid fa-indian-rupee-sign"></i> Pay Now
                 </button>
               </div>
@@ -640,7 +645,7 @@ async function loadChildFeeStatus(roll, child) {
 }
 
 // Hands off to the dedicated payment page. Only roll + which
-// period is passed — the amount is deliberately NOT sent here;
+// period is passed - the amount is deliberately NOT sent here;
 // pay-fee.html re-derives it fresh from Firestore itself so it
 // can never be tampered with via the URL.
 function goToPayFee(roll, periodKey) {

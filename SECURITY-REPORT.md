@@ -17,7 +17,7 @@ Firestore rules are combined with OR. If any rule allows an action, it is allowe
 - Anyone on the internet can read every collection, including sign-in logs and subscriber emails.
 - Anyone who is signed in can write or delete anything. Signing in is easy: your Firebase `apiKey` is public by design, and sign-up is open (the admin screen itself creates teacher accounts from the browser). An attacker can create a free account and then edit or delete students, fees, notices and teachers.
 
-Replace them with `firebase-backend/firestore.rules` (see section 4).
+Replace them with `firestore.rules` (see section 4).
 
 ## 2. What is still exposed after the new rules
 
@@ -37,17 +37,17 @@ Until then, treat student data as readable by anyone technical, and do not store
 - Every page: Content-Security-Policy meta tag, referrer policy, `noindex` on private pages, favicon, descriptions, consistent titles, legal links in the footer.
 - New: `privacy.html`, `terms.html`, `cookies.html`, `refund.html`, `404.html`.
 - `student-register.html`: removed the placeholder number (now uses 917970500551), added a parent/guardian consent checkbox, validation and inline messages.
-- Unused files moved to `_unused/` (GitHub Pages does not publish folders that start with an underscore): `assistant.html`, `my-portfolio.html`, `coming-soon.html`, `home.js`.
+- Unused files renamed with an `unused-` prefix: `unused-assistant.html`, `unused-my-portfolio.html`, `unused-coming-soon.html`, `unused-home.js`. Nothing links to them. Because the project is now one flat folder, GitHub Pages WILL publish them, so delete them from the repo if you do not need them.
 - Style: button corners are no longer pill shaped, purple gradients in `admin.css` are solid colours, em dashes removed.
-- Images: login logo reduced from 396 KB to 178 KB. Originals are in `_source/`.
+- Images: login logo reduced from 396 KB to 178 KB. Originals are `logo-original.png` and `favicon-original.png` (delete them from the repo if you do not need them online).
 - Mobile: two-column forms stack on phones. All 40 pages tested at 360 px wide with no sideways scrolling (logged-in pages tested with empty data).
 
 ## 4. What you must do (in this order)
 
 1. Back up: Firebase console, Firestore, export data (or note that it can be recreated).
 2. Upload this project to your repo so the new admin code is live. Open the admin dashboard once while signed in as admin. This creates the `teacherAccounts` records for existing teachers. Teachers cannot sign in until it has run.
-3. Firestore, Rules: paste `firebase-backend/firestore.rules`, Publish.
-4. Storage, Rules: paste `firebase-backend/storage.rules`, Publish.
+3. Firestore, Rules: paste `firestore.rules`, Publish.
+4. Storage, Rules: paste `storage.rules`, Publish.
 5. Test as each role: admin (add student, add teacher, notices, fees), teacher (marks, attendance, homework), student, parent (report a payment). Use the Rules Playground in the console too.
 6. Google Cloud Console, APIs and Services, Credentials: edit the browser key and restrict it to `https://vivaan001-creator.github.io/*` (and your custom domain later).
 7. Firebase, Authentication, Settings: turn on email enumeration protection, and consider App Check.
