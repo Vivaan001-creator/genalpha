@@ -3204,6 +3204,7 @@ function openNoticeModal(noticeId) {
     if (existing) {
       document.getElementById("noticeTitle").value = existing.title || "";
       document.getElementById("noticeDescription").value = existing.description || "";
+      const fe = document.getElementById("noticeIsFeature"); if (fe) fe.checked = existing.type === "feature";
       if (existing.date && existing.date.toDate) {
         document.getElementById("noticeDate").value = existing.date.toDate().toISOString().slice(0, 10);
       }
@@ -3243,11 +3244,14 @@ async function saveNotice() {
     return;
   }
 
+  const featEl = document.getElementById("noticeIsFeature");
   const noticeData = {
     title,
     description,
-    date: Timestamp.fromDate(new Date(dateValue))
+    date: Timestamp.fromDate(new Date(dateValue)),
+    type: featEl && featEl.checked ? "feature" : "notice"
   };
+  if (!editingNoticeId) noticeData.createdAt = Timestamp.now();
 
   try {
 
