@@ -120,9 +120,13 @@ service cloud.firestore {
     match /teachers/{id} {
       allow read: if isStaff();
       allow create, delete: if isAdmin();
+      // A teacher may update login tracking and their own profile details only.
+      // Email, status, subject, ID and class assignment stay admin-only.
       allow update: if isAdmin()
         || (isTeacher() && myTeacherId() == id
-            && onlyChanges(['lastLogin', 'loginCount']));
+            && onlyChanges(['lastLogin', 'loginCount',
+                'name', 'phone', 'contactEmail', 'dob', 'gender', 'address',
+                'qualification', 'experience', 'summary']));
     }
 
     // Access record the rules use to recognise a teacher. Keyed by email.
@@ -130,6 +134,35 @@ service cloud.firestore {
       allow read: if isAdmin()
         || (signedIn() && request.auth.token.email == email);
       allow write: if isAdmin();
+    }
+
+    // ---------- Profile change requests from parents ----------
+    // Parents are not Firebase users, so they cannot edit a student record. They
+    // send a request, and only the admin can approve it and change the record.
+    match /profileRequests/{id} {
+      // A parent reads only the request they created (the id is unguessable).
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if request.resource.data.keys().hasOnly(
+            ['roll', 'studentName', 'changes', 'previous', 'status', 'createdAt', 'requestedBy'])
+          && request.resource.data.status == 'pending'
+          && request.resource.data.requestedBy == 'parent'
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.roll is string
+          && request.resource.data.roll.size() <= 50
+          && exists(/databases/$(database)/documents/students/$(request.resource.data.roll))
+          && request.resource.data.studentName is string
+          && request.resource.data.studentName.size() <= 200
+          && request.resource.data.changes is map
+          && request.resource.data.changes.size() > 0
+          && request.resource.data.changes.keys().hasOnly(
+               ['name', 'father', 'mother', 'dob', 'gender', 'contactNumber',
+                'altContact', 'parentEmail', 'address', 'previousSchool'])
+          && request.resource.data.previous is map
+          && request.resource.data.previous.keys().hasOnly(
+               ['name', 'father', 'mother', 'dob', 'gender', 'contactNumber',
+                'altContact', 'parentEmail', 'address', 'previousSchool']);
+      allow update, delete: if isAdmin();
     }
 
     // ---------- Activity log ----------

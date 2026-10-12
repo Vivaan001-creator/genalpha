@@ -505,6 +505,10 @@ async function loadStudent() {
 
     document.getElementById("studentName").value = student.name || "";
     document.getElementById("fatherName").value = student.father || "";
+    const altField = document.getElementById("altContact");
+    if (altField) altField.value = student.altContact || "";
+    const emailField = document.getElementById("parentEmail");
+    if (emailField) emailField.value = student.parentEmail || "";
     document.getElementById("attendance").value = student.attendance || "";
 
     const motherField = document.getElementById("motherName");
@@ -713,6 +717,8 @@ async function saveStudent() {
         dob: document.getElementById("dob")?.value || "",
         gender: document.getElementById("gender")?.value || "",
         contactNumber: document.getElementById("contactNumber")?.value || "",
+        altContact: document.getElementById("altContact")?.value || "",
+        parentEmail: document.getElementById("parentEmail")?.value || "",
         address: document.getElementById("address")?.value || "",
         admissionDate: document.getElementById("admissionDate")?.value || "",
         previousSchool: document.getElementById("previousSchool")?.value || "",
@@ -824,6 +830,8 @@ async function addStudent() {
       dob,
       gender,
       contactNumber,
+      altContact: document.getElementById("altContact")?.value.trim() || "",
+      parentEmail: document.getElementById("parentEmail")?.value.trim() || "",
       address,
       admissionDate,
       previousSchool,
@@ -1171,6 +1179,42 @@ if (clearAllLoginsBtn) {
 }
 
 loadLoginActivity();
+
+
+// ==========================
+// Admin profile name on the dashboard, and the pending profile request count
+// ==========================
+async function applyAdminProfile() {
+    const chipName = document.querySelector(".role-chip span");
+    const welcomeName = document.querySelector(".top-header-left h1 span");
+    if (!chipName && !welcomeName) return;
+    try {
+        const snap = await getDoc(doc(db, "appMeta", "adminProfile"));
+        const name = snap.exists() ? String(snap.data().name || "").trim() : "";
+        if (!name) return;
+        if (chipName) chipName.textContent = name;
+        if (welcomeName) welcomeName.textContent = name.split(" ")[0];
+    } catch (e) {
+        console.error("Could not load the admin profile:", e);
+    }
+}
+applyAdminProfile();
+
+async function loadProfileRequestBadge() {
+    const badge = document.getElementById("profileRequestBadge");
+    if (!badge) return;
+    try {
+        const snap = await getDocs(query(collection(db, "profileRequests"), where("status", "==", "pending")));
+        if (snap.size > 0) {
+            badge.textContent = String(snap.size);
+            badge.hidden = false;
+            badge.setAttribute("aria-label", snap.size + " pending");
+        }
+    } catch (e) {
+        console.error("Could not count profile requests:", e);
+    }
+}
+loadProfileRequestBadge();
 
 // ==========================
 // Dashboard Clock

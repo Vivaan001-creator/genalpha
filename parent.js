@@ -264,6 +264,39 @@ async function switchChild(roll) {
 }
 window.switchChild = switchChild;
 
+// Shows whether the parent's last profile change request is waiting, approved or declined.
+async function showProfileRequestStatus(roll) {
+  const box = document.getElementById("profileRequestBanner");
+  if (!box) return;
+  const key = "profileRequest_" + roll;
+  const id = localStorage.getItem(key);
+  box.hidden = true;
+  if (!id) return;
+  try {
+    const snap = await getDoc(doc(db, "profileRequests", id));
+    if (!snap.exists()) { localStorage.removeItem(key); return; }
+    const req = snap.data();
+    const dismiss = '<button type="button" id="dismissRequestBanner">Dismiss</button>';
+    if (req.status === "pending") {
+      box.className = "request-banner";
+      box.textContent = "Your profile changes are waiting for approval from the tuition office.";
+    } else if (req.status === "approved") {
+      box.className = "request-banner ok";
+      box.textContent = "Your profile changes were approved and the profile is updated. ";
+      box.insertAdjacentHTML("beforeend", dismiss);
+    } else {
+      box.className = "request-banner err";
+      box.textContent = "Your profile changes were not approved." + (req.reviewNote ? " Reason: " + req.reviewNote : "") + " ";
+      box.insertAdjacentHTML("beforeend", dismiss);
+    }
+    box.hidden = false;
+    const btn = document.getElementById("dismissRequestBanner");
+    if (btn) btn.addEventListener("click", () => { localStorage.removeItem(key); box.hidden = true; });
+  } catch (e) {
+    console.error("Could not read the profile request status:", e);
+  }
+}
+
 async function loadChildDashboard(roll) {
   const child = childrenCache.find((c) => c.roll === roll);
   if (!child) return;
@@ -275,6 +308,7 @@ async function loadChildDashboard(roll) {
   setText("dashChildClass2", child.class || "-");
   setText("dashFatherName", child.father || "-");
   setText("dashMotherName", child.mother || "-");
+  showProfileRequestStatus(roll);
   setText("dashAttendance", (child.attendance || "0") + "%");
 
   const monthSelect = document.getElementById("resultMonth");
