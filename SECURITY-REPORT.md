@@ -37,12 +37,18 @@ Until then, treat student data as readable by anyone technical, and do not store
 - Every page: Content-Security-Policy meta tag, referrer policy, `noindex` on private pages, favicon, descriptions, consistent titles, legal links in the footer.
 - New: `privacy.html`, `terms.html`, `cookies.html`, `refund.html`, `404.html`.
 - `student-register.html`: removed the placeholder number (now uses 917970500551), added a parent/guardian consent checkbox, validation and inline messages.
-- Unused files renamed with an `unused-` prefix: `unused-assistant.html`, `unused-coming-soon.html`, `unused-home.js`. Nothing links to them. Because the project is now one flat folder, GitHub Pages WILL publish them, so delete them from the repo if you do not need them.
+- Unused files renamed with an `unused-` prefix: `unused-assistant.html`, `unused-coming-soon.html`, `unused-home.js`. Nothing links to them. `_config.yml` tells GitHub Pages not to publish them, nor this report, the rules files, `package.json`, `capacitor.config.json` or the original images. Do not add a `.nojekyll` file or that list stops working. If your repo is published by a GitHub Action instead of the default branch build, `_config.yml` is ignored, so check that `SECURITY-REPORT.md` is not reachable on your site.
 - Accessibility: every form control has a label, keyboard focus is always visible, browser pop-up alerts are replaced by on-page messages (success and error), teacher phone numbers and emails are tap-to-call and tap-to-email. Text contrast was checked automatically on every page in light and dark mode (empty-data state) and now passes. Fixed along the way: invisible text on form cards in dark mode, faint footer and bottom-nav labels, and an unreadable teacher signature in dark mode on the result page.
 - Style: button corners are no longer pill shaped, purple gradients in `admin.css` are solid colours, em dashes removed.
-- Images: login logo reduced from 396 KB to 178 KB. Originals are `logo-original.png` and `favicon-original.png` (delete them from the repo if you do not need them online).
+- Images: login logo reduced from 396 KB to 178 KB. Originals are `logo-original.png` and `favicon-original.png` (excluded from the website by `_config.yml`).
 - Mobile (admin): the dashboard had its page padding wiped out by a later CSS rule, so everything touched the screen edges; fixed, with a 2x2 stats grid. List cards no longer overflow their box, class teacher and payment history cells are tidy. All 19 admin pages were run against realistic mock data at 360 and 320 px wide, light and dark, with a check that no element sticks out past the screen.
-- Mobile: two-column forms stack on phones. All 40 pages tested at 360 px wide with no sideways scrolling (logged-in pages tested with empty data).
+- Mobile: two-column forms stack on phones. All 41 pages load at 360 px wide with no sideways scrolling. Teacher, student and parent pages were also run against mock data at 360 and 320 px, light and dark.
+- Logins: all four roles (student, parent, teacher, admin) now show a success message and the message survives the redirect to the dashboard. Parent logins are now recorded in Login Activity (before, only student, teacher and admin were). Admin login now waits up to 2.5 seconds for its log to be sent, so leaving the page no longer cancels it.
+- Login Activity: each record has a Delete button, and Clear All Records removes every record (not just the 200 shown), both with a confirmation. A Parent Logins count and badge were added.
+- Parent dashboard: Mother's Name added to the child profile.
+- Contrast: re-checked with realistic data loaded (the earlier check ran on empty pages and missed table buttons and status badges). Fixed Edit, View, Delete, status badges, subject chips and similar. Zero failures on the pages tested, light and dark.
+- Rules audit: every Firestore read and write in the code was compared with `firestore.rules`. They match, including the exact fields written for login logs, parent payment reports, homework and login tracking.
+- Release build: `package.json` has a new `build:android:release` script. The existing `build:android` makes a debug build, which should not be shipped; a release build must be signed with your own keystore.
 
 ## 4. What you must do (in this order)
 
@@ -67,7 +73,7 @@ I could not run the rules in the Firebase emulator here. Step 5 is not optional.
 - Rate limiting: there is none on the student and parent login (it cannot be done in static files). Firebase limits admin and teacher attempts.
 - Custom domain: add a `CNAME` file and DNS records, then turn on Enforce HTTPS in GitHub Pages settings.
 - The app text mixes English and romanised Hindi.
-- Not checked: text over gradient or image backgrounds (the automatic check skips them), text that only appears once real data loads, image rights (the logo is the only photo-like asset), and whether every button works with real data.
+- Not checked: text over gradient or image backgrounds (the automatic check skips them), image rights (the logo is the only photo-like asset), the add and edit pop-up forms on admin pages, and anything that depends on your real database contents. Tests used a fake in-memory Firebase, not your live project.
 - Not changed: the colourful gradient in your logo itself.
 
 ## 6. Legal pages: please confirm

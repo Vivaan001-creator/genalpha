@@ -3,6 +3,8 @@ import {
   doc,
   getDoc,
   getDocs,
+  addDoc,
+  serverTimestamp,
   collection,
   query,
   where,
@@ -140,10 +142,25 @@ async function parentLogin() {
       return;
     }
 
+    // Record this login so it shows on the admin's Login Activity page.
+    // A tracking problem must never stop the parent from logging in.
+    try {
+      await addDoc(collection(db, "loginLogs"), {
+        role: "parent",
+        refId: roll,
+        name: "Parent of " + (student.name || student.studentName || roll),
+        class: student.class || "",
+        timestamp: serverTimestamp()
+      });
+    } catch (logErr) {
+      console.error("Login tracking failed:", logErr);
+    }
+
     localStorage.setItem("parentLoggedIn", "true");
     localStorage.setItem("parentContact", contact);
     localStorage.setItem("parentActiveRoll", roll);
 
+    alert("Login successful. Welcome back!");
     window.location.href = "parent-dashboard.html";
 
   } catch (error) {
@@ -257,6 +274,7 @@ async function loadChildDashboard(roll) {
   setText("dashChildClass", child.class || "-");
   setText("dashChildClass2", child.class || "-");
   setText("dashFatherName", child.father || "-");
+  setText("dashMotherName", child.mother || "-");
   setText("dashAttendance", (child.attendance || "0") + "%");
 
   const monthSelect = document.getElementById("resultMonth");
