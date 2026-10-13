@@ -9,6 +9,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="site.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script src="appearance.js"></script>
@@ -251,7 +252,6 @@
       <div class="field"><label for="noticeTitle">Title <span style="color:var(--coral);">*</span></label><input type="text" id="noticeTitle" placeholder="e.g. Holiday Notice" required></div>
       <div class="field"><label for="noticeDate">Date <span style="color:var(--coral);">*</span></label><input type="date" id="noticeDate" required></div>
       <div class="field"><label for="noticeDescription">Description</label><textarea id="noticeDescription" rows="4" style="padding:11px 14px; border:1.5px solid rgba(36,31,20,.1); border-radius:12px; font-size:13.5px; font-family:inherit; background:var(--paper); color:var(--ink); resize:vertical;"></textarea></div>
-      <div class="field"><label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="noticeIsFeature"> Ye naya feature hai (har device par ek baar highlight hoga)</label></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" onclick="closeNoticeModal()">Cancel</button>
         <button type="button" class="btn btn-primary" onclick="saveNotice()"><i class="fa-solid fa-floppy-disk"></i> Save Notice</button>

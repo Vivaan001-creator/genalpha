@@ -1,125 +1,362 @@
-// GenAlpha notifications (shared by Admin, Teacher, Parent and Student dashboards).
-// Reads the public "notices" collection in real time. Each device keeps its own
-// "last seen" time in localStorage, so the red dot and highlight are per device.
+// Notifications for every logged-in dashboard.
+//   - Asks once (Yes / No) before the browser's own permission prompt.
+//   - Student and parent dashboards get a bell: a blinking red dot means a new
+//     notice or app update. Opening the bell shows them and clears the dot.
+//   - New features listed in whats-new.json are highlighted once per device.
+//   - Update checks read whats-new.json, so uploading a new version of that file
+//     is what tells every device "something changed".
+// Limit: this works while the app or browser tab is alive. Notifications to a
+// phone that has the app fully closed need a push server (see the report).
 import { db } from "./Firebase.js";
-import {
-  collection, query, orderBy, limit, onSnapshot
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { collection, query, orderBy, limit, onSnapshot }
+  from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-const K_SEEN = "ga_notif_seen";            // ms time the user last opened the bell
-const K_ASKED = "ga_notif_perm_asked";     // permission popup answered (yes/no)
-const K_FEAT = "ga_notif_feature_shown";   // feature notice ids already highlighted
-const K_PUSHED = "ga_notif_pushed";        // ids already shown as system notification
+const marker = document.querySelector("script[data-notify-role]");
+const ROLE = marker ? marker.getAttribute("data-notify-role") : "";
+const HAS_BELL = ROLE === "student" || ROLE === "parent";
+const BELL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
 
-const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
-  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const readJson = (k) => { try { return JSON.parse(localStorage.getItem(k) || "[]"); } catch (e) { return []; } };
-const ms = (n) => (n.createdAt && n.createdAt.toMillis) ? n.createdAt.toMillis()
-  : (n.date && n.date.toMillis) ? n.date.toMillis() : 0;
+const K = {
+  ask: "ga_n_ask",
+  seenNotices: "ga_n_seen_" + ROLE,
+  version: "ga_n_version_" + ROLE,
+  versionNotified: "ga_n_vnotified_" + ROLE,
+  features: "ga_n_features_" + ROLE,
+  noticeNotified: "ga_n_nnotified_" + ROLE
+};
 
-const css = `
-.ga-bell{position:relative}
-.ga-dot{position:absolute;top:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:#e5584a;border:2px solid #0e1326;display:none;animation:gaBlink 1s infinite}
-.ga-dot.on{display:block}
-@keyframes gaBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(1.25)}}
-.ga-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9998;display:none}
-.ga-ov.on{display:block}
-.ga-panel{position:fixed;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top,0px));max-width:420px;margin:0 auto;max-height:75vh;overflow:auto;background:var(--surface-card,#fff);color:var(--ink,#241f14);border:1px solid var(--surface-card-border,#ddd);border-radius:18px;box-shadow:0 18px 40px rgba(0,0,0,.3);z-index:9999;display:none;padding:14px}
-.ga-panel.on{display:block}
-.ga-panel h3{font-size:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
-.ga-panel h3 button{background:none;border:0;font-size:22px;color:inherit;cursor:pointer}
-.ga-item{padding:10px 12px;border-radius:12px;background:var(--paper,#f7f2e4);margin-bottom:8px;font-size:13px}
-.ga-item.new{border-left:4px solid #e5584a}
-.ga-item.feat{animation:gaGlow 1.2s ease 3;border-left:4px solid #ffb347}
-.ga-item b{display:block;font-size:13.5px;margin-bottom:3px}
-.ga-item small{opacity:.65}
-.ga-badge{background:#ffb347;color:#1c1c1c;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;margin-right:6px}
-@keyframes gaGlow{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 4px rgba(255,179,71,.55)}}
-.ga-ask{position:fixed;left:14px;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:420px;margin:0 auto;background:#161d3a;color:#fff;border-radius:18px;padding:16px;z-index:10000;box-shadow:0 18px 40px rgba(0,0,0,.4);font-size:13.5px}
-.ga-ask div{display:flex;gap:10px;margin-top:12px}
-.ga-ask button{flex:1;padding:10px;border-radius:12px;border:0;font-weight:700;cursor:pointer}
-.ga-ask .y{background:#ffc72c;color:#1c1c1c}.ga-ask .n{background:rgba(255,255,255,.14);color:#fff}
-`;
+const read = (k, fallback) => { try { const v = localStorage.getItem(k); return v === null ? fallback : JSON.parse(v); } catch (e) { return fallback; } };
+const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage full or blocked */ } };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const esc = (s) => String(s === undefined || s === null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+const tsMs = (v) => (v && typeof v.toMillis === "function" ? v.toMillis() : (v && v.toDate ? v.toDate().getTime() : 0));
+const dateText = (ms) => ms ? new Date(ms).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "";
 
-let items = [];
-let firstLoad = true;
+const supported = "Notification" in window;
+const permission = () => (supported ? Notification.permission : "unsupported");
 
-function mount() {
-  const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
+// ---------- state ----------
+let notices = [];            // { id, title, description, time }
+let seenTs = read(K.seenNotices, 0);
+if (!seenTs) { seenTs = Date.now(); write(K.seenNotices, seenTs); } // old notices on a new device are not "new"
+let site = null;             // parsed whats-new.json
+let loadedVersion = null;    // version the page loaded with
+let needsReload = false;
+let bell = null, dotEl = null, bellNavDot = null;
+let panelOpen = false;
+let firstSnapshotDone = false;
 
-  const host = document.querySelector(".header-actions");
-  const btn = document.createElement("button");
-  btn.className = "header-icon-btn ga-bell"; btn.type = "button";
-  btn.setAttribute("aria-label", "Notifications");
-  btn.innerHTML = '<i class="fa-regular fa-bell"></i><span class="ga-dot" id="gaDot"></span>';
-  if (host) host.insertBefore(btn, host.firstChild);
-  else { btn.style.cssText = "position:fixed;top:12px;right:12px;z-index:9000;background:#161d3a"; document.body.appendChild(btn); }
+const unseenNotices = () => notices.filter((n) => n.time > seenTs);
+const versionUnseen = () => !!(site && site.version && read(K.version, null) !== site.version);
 
-  const ov = document.createElement("div"); ov.className = "ga-ov";
-  const panel = document.createElement("div"); panel.className = "ga-panel";
-  document.body.append(ov, panel);
+// ---------- small UI helpers ----------
+function toast(text) {
+  document.querySelectorAll(".ga-toast").forEach((t) => t.remove());
+  const t = document.createElement("div");
+  t.className = "ga-toast"; t.setAttribute("role", "status"); t.textContent = text;
+  t.addEventListener("click", () => t.remove());
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 6000);
+}
 
-  const close = () => { ov.classList.remove("on"); panel.classList.remove("on"); };
-  ov.addEventListener("click", close);
-  btn.addEventListener("click", () => {
-    render(true);
-    ov.classList.add("on"); panel.classList.add("on");
-    localStorage.setItem(K_SEEN, String(Date.now()));   // red dot goes away
-    setDot(false);
+// ---------- system notifications ----------
+async function registerSW() {
+  if (!("serviceWorker" in navigator)) return null;
+  try { return await navigator.serviceWorker.register("sw.js"); } catch (e) { return null; }
+}
+
+async function showSystem(title, body, tag, url) {
+  if (permission() !== "granted") return false;
+  try {
+    if ("serviceWorker" in navigator) {
+      await registerSW();
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(title, { body, tag, icon: "icon-192.png", badge: "favicon-32.png", data: { url: url || "./login.html" } });
+      return true;
+    }
+    new Notification(title, { body, tag, icon: "icon-192.png" });
+    return true;
+  } catch (e) { return false; }
+}
+
+// ---------- dot / badge ----------
+function updateDot() {
+  const count = (HAS_BELL ? unseenNotices().length : 0) + (versionUnseen() ? 1 : 0);
+  if (bell && dotEl) {
+    dotEl.hidden = count === 0;
+    bell.setAttribute("aria-label", count ? "Notifications, " + count + " new" : "Notifications");
+  }
+  const nav = document.querySelector('[data-bn-tab="notices"] .bn-icon-wrap');
+  if (nav) {
+    const has = unseenNotices().length > 0;
+    if (has && !bellNavDot) { nav.style.position = "relative"; bellNavDot = document.createElement("span"); bellNavDot.className = "ga-bn-dot"; bellNavDot.setAttribute("aria-hidden", "true"); nav.appendChild(bellNavDot); }
+    if (!has && bellNavDot) { bellNavDot.remove(); bellNavDot = null; }
+  }
+  renderBanner();
+}
+
+// ---------- update banner (teacher and admin, or when a reload is needed) ----------
+function renderBanner() {
+  const old = document.getElementById("gaBanner");
+  const show = (!HAS_BELL && versionUnseen()) || needsReload;
+  if (!show) { if (old) old.remove(); return; }
+  if (old) return;
+  const latest = site && site.releases && site.releases[0];
+  const b = document.createElement("div");
+  b.id = "gaBanner"; b.className = "ga-banner"; b.setAttribute("role", "status");
+  b.innerHTML = '<span><strong>' + (needsReload ? "App updated." : "What's new.") + '</strong> ' + esc(latest ? latest.title : "The app was updated.") + '</span>';
+  const open = document.createElement("button"); open.type = "button"; open.className = "ga-btn primary";
+  open.textContent = needsReload ? "Reload" : "See what's new";
+  open.addEventListener("click", () => { if (needsReload) window.location.reload(); else openPanel(); });
+  const close = document.createElement("button"); close.type = "button"; close.className = "ga-btn"; close.textContent = "Dismiss";
+  close.addEventListener("click", () => { if (site) write(K.version, site.version); b.remove(); updateDot(); });
+  b.appendChild(open); b.appendChild(close);
+  // Sit in the page, just under the header, so it never covers the header buttons.
+  const header = document.querySelector(".top-header");
+  if (header) header.insertAdjacentElement("afterend", b);
+  else { b.classList.add("ga-banner-fixed"); document.body.appendChild(b); }
+}
+
+// ---------- the panel ----------
+function permissionRow() {
+  const p = permission();
+  if (p === "unsupported") return '<div class="ga-row"><span>Phone alerts need this app added to your Home Screen on iPhone, or a browser that supports notifications.</span></div>';
+  if (p === "granted") return '<div class="ga-row"><span>Notifications are <strong>on</strong> for this device.</span></div>';
+  if (p === "denied") return '<div class="ga-row"><span>Notifications are <strong>blocked</strong>. Turn them on in your browser or phone settings.</span></div>';
+  return '<div class="ga-row"><span>Notifications are <strong>off</strong>.</span><button type="button" class="ga-btn primary" id="gaEnable">Turn on</button></div>';
+}
+
+function openPanel() {
+  if (panelOpen) return;
+  panelOpen = true;
+  const opener = document.activeElement;
+  const newNoticeIds = new Set(unseenNotices().map((n) => n.id));
+  const wasNewVersion = versionUnseen();
+
+  const backdrop = document.createElement("div"); backdrop.className = "ga-backdrop";
+  const sheet = document.createElement("div"); sheet.className = "ga-sheet"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-modal", "true"); sheet.setAttribute("aria-labelledby", "gaPanelTitle");
+
+  const releases = (site && site.releases ? site.releases : []).slice(0, 3);
+  let html = '<div class="ga-sheet-head"><h2 id="gaPanelTitle">Notifications</h2><button type="button" class="ga-close" aria-label="Close">&times;</button></div>';
+  html += permissionRow();
+
+  html += '<div class="ga-sec">App updates</div>';
+  if (!releases.length) html += '<p class="ga-empty">No updates yet.</p>';
+  releases.forEach((r, i) => {
+    html += '<div class="ga-item"><h3>' + esc(r.title) + (i === 0 && wasNewVersion ? '<span class="ga-new">NEW</span>' : "") + '</h3>' +
+      '<span class="ga-when">' + esc(dateText(Date.parse(r.date))) + '</span>' +
+      (r.notes && r.notes.length ? "<ul>" + r.notes.map((n) => "<li>" + esc(n) + "</li>").join("") + "</ul>" : "") +
+      (i === 0 && needsReload ? '<p style="margin-top:10px"><button type="button" class="ga-btn primary" id="gaReload">Reload to update</button></p>' : "") + "</div>";
   });
-  panel.addEventListener("click", (e) => { if (e.target.closest("[data-x]")) close(); });
+
+  if (HAS_BELL) {
+    html += '<div class="ga-sec">Notices</div>';
+    if (!notices.length) html += '<p class="ga-empty">No notices yet.</p>';
+    notices.slice(0, 10).forEach((n) => {
+      html += '<div class="ga-item"><h3>' + esc(n.title || "Notice") + (newNoticeIds.has(n.id) ? '<span class="ga-new">NEW</span>' : "") + "</h3>" +
+        (n.description ? "<p>" + esc(n.description) + "</p>" : "") + '<span class="ga-when">' + esc(dateText(n.time)) + "</span></div>";
+    });
+    html += '<button type="button" class="ga-link" id="gaViewAll">View all notices</button>';
+  }
+  sheet.innerHTML = html;
+  document.body.appendChild(backdrop); document.body.appendChild(sheet);
+
+  const close = () => {
+    if (!panelOpen) return;
+    panelOpen = false; backdrop.remove(); sheet.remove(); document.removeEventListener("keydown", onKey);
+    if (opener && opener.focus) opener.focus();
+  };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey);
+  backdrop.addEventListener("click", close);
+  sheet.querySelector(".ga-close").addEventListener("click", close);
+  const enable = sheet.querySelector("#gaEnable");
+  if (enable) enable.addEventListener("click", async () => { await requestPermissionFlow(); close(); openPanel(); });
+  const reload = sheet.querySelector("#gaReload");
+  if (reload) reload.addEventListener("click", () => window.location.reload());
+  const all = sheet.querySelector("#gaViewAll");
+  if (all) all.addEventListener("click", () => { close(); if (window.BottomNav && window.BottomNav.go) window.BottomNav.go("notices"); });
+  sheet.querySelector(".ga-close").focus();
+
+  // Opening the panel means the user has seen everything in it.
+  seenTs = Date.now(); write(K.seenNotices, seenTs);
+  if (site && site.version) write(K.version, site.version);
+  updateDot();
 }
 
-function setDot(on) { const d = document.getElementById("gaDot"); if (d) d.classList.toggle("on", on); }
-
-function render() {
-  const panel = document.querySelector(".ga-panel"); if (!panel) return;
-  const seen = Number(localStorage.getItem(K_SEEN) || 0);
-  const shown = readJson(K_FEAT);
-  const body = items.length ? items.map((n) => {
-    const isNew = ms(n) > seen;
-    const feat = n.type === "feature";
-    const hl = feat && !shown.includes(n.id);               // highlight only once per device
-    const d = ms(n) ? new Date(ms(n)).toLocaleDateString("en-IN", { day: "2-digit", month: "short" }) : "";
-    return `<div class="ga-item${isNew ? " new" : ""}${hl ? " feat" : ""}"><b>${feat ? '<span class="ga-badge">NEW</span>' : ""}${esc(n.title)}</b>${esc(n.description)}<br><small>${d}</small></div>`;
-  }).join("") : "<p style='font-size:13px;opacity:.7'>Abhi koi notification nahi hai.</p>";
-  panel.innerHTML = `<h3>Notifications <button data-x aria-label="Close">&times;</button></h3>${body}`;
-  // after the panel was shown once, never highlight those feature items again
-  const ids = items.filter((n) => n.type === "feature").map((n) => n.id);
-  localStorage.setItem(K_FEAT, JSON.stringify([...new Set([...shown, ...ids])].slice(-100)));
-}
-
-function systemNotify(n) {
-  const pushed = readJson(K_PUSHED);
-  if (pushed.includes(n.id)) return;
-  localStorage.setItem(K_PUSHED, JSON.stringify([...pushed, n.id].slice(-100)));
-  if (!("Notification" in window) || Notification.permission !== "granted") return;
-  try { new Notification(n.type === "feature" ? "New feature: " + n.title : n.title, { body: n.description || "", icon: "icon.png" }); } catch (e) {}
+// ---------- permission (Yes / No first, then the browser's own prompt) ----------
+async function requestPermissionFlow() {
+  if (!supported) return "unsupported";
+  const result = await new Promise((resolve) => {
+    try { const p = Notification.requestPermission(resolve); if (p && p.then) p.then(resolve); } catch (e) { resolve("denied"); }
+  });
+  write(K.ask, { state: "yes", at: Date.now(), result });
+  if (result === "granted") { await registerSW(); toast("Notifications are on. You will be alerted about new notices and app updates."); }
+  else if (result === "denied") toast("Notifications are blocked. You can turn them on in your browser settings.");
+  return result;
 }
 
 function askPermission() {
-  if (!("Notification" in window)) return;
-  if (Notification.permission !== "default" || localStorage.getItem(K_ASKED)) return;
-  const box = document.createElement("div"); box.className = "ga-ask";
-  box.innerHTML = 'Naye notice aur updates ka notification chahiye?<div><button class="n">No</button><button class="y">Yes</button></div>';
-  document.body.appendChild(box);
-  box.querySelector(".y").onclick = () => { localStorage.setItem(K_ASKED, "yes"); box.remove(); try { Notification.requestPermission(); } catch (e) {} };
-  box.querySelector(".n").onclick = () => { localStorage.setItem(K_ASKED, "no"); box.remove(); };
+  if (!supported || permission() !== "default") return Promise.resolve();
+  const prev = read(K.ask, null);
+  if (prev && prev.state === "no" && Date.now() - prev.at < 7 * 864e5) return Promise.resolve();
+  return new Promise((resolve) => {
+    const backdrop = document.createElement("div"); backdrop.className = "ga-backdrop";
+    const sheet = document.createElement("div"); sheet.className = "ga-sheet ga-ask"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-modal", "true");
+    sheet.setAttribute("aria-labelledby", "gaAskTitle"); sheet.setAttribute("aria-describedby", "gaAskText");
+    sheet.innerHTML = '<h2 id="gaAskTitle">Get notifications?</h2>' +
+      '<p id="gaAskText">Allow GenAlpha to alert you about new notices and app updates on this device.</p>' +
+      '<div class="ga-actions"><button type="button" class="ga-btn" id="gaNo">No</button><button type="button" class="ga-btn primary" id="gaYes">Yes</button></div>';
+    document.body.appendChild(backdrop); document.body.appendChild(sheet);
+    const finish = () => { backdrop.remove(); sheet.remove(); document.removeEventListener("keydown", onKey); resolve(); };
+    const decline = () => { write(K.ask, { state: "no", at: Date.now() }); finish(); };
+    const onKey = (e) => { if (e.key === "Escape") decline(); };
+    document.addEventListener("keydown", onKey);
+    sheet.querySelector("#gaNo").addEventListener("click", decline);
+    sheet.querySelector("#gaYes").addEventListener("click", async () => { sheet.querySelector("#gaYes").disabled = true; await requestPermissionFlow(); finish(); });
+    sheet.querySelector("#gaYes").focus();
+  });
 }
 
-function listen() {
+// ---------- feature highlight (once per device) ----------
+function visible(el) { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden"; }
+
+async function waitFor(selector, ms) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    const el = document.querySelector(selector);
+    if (el && visible(el)) return el;
+    await sleep(250);
+  }
+  return null;
+}
+
+function spotlight(feature, el) {
+  return new Promise((resolve) => {
+    const seen = new Set(read(K.features, []));
+    let finished = false;
+    const tag = document.createElement("span"); tag.className = "ga-new-tag"; tag.textContent = "NEW"; tag.setAttribute("aria-hidden", "true");
+    const pop = document.createElement("div"); pop.className = "ga-pop"; pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", "New feature: " + feature.title);
+    pop.innerHTML = "<h3>" + esc(feature.title) + "</h3><p>" + esc(feature.text) + '</p><button type="button" class="ga-btn primary">Got it</button>';
+    const cs = getComputedStyle(el);
+    if (cs.position === "static") el.style.position = "relative";
+    el.classList.add("ga-spot"); el.appendChild(tag); document.body.appendChild(pop);
+
+    const place = () => {
+      const r = el.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight, m = 12;
+      let top = r.bottom + 14;
+      if (top + ph > window.innerHeight - m) top = Math.max(m, r.top - ph - 14);
+      let left = Math.min(Math.max(m, r.left + r.width / 2 - pw / 2), window.innerWidth - pw - m);
+      pop.style.top = top + "px"; pop.style.left = left + "px";
+    };
+    const done = () => {
+      if (finished) return; finished = true;
+      seen.add(feature.id); write(K.features, [...seen]);  // saved at once, so leaving the page cannot repeat it
+      el.classList.remove("ga-spot"); tag.remove(); pop.remove();
+      window.removeEventListener("resize", place); window.removeEventListener("scroll", place, true);
+      document.removeEventListener("keydown", onKey); el.removeEventListener("click", done, true);
+      resolve();
+    };
+    const onKey = (e) => { if (e.key === "Escape") done(); };
+    el.scrollIntoView({ block: "center", behavior: "auto" });
+    place();
+    window.addEventListener("resize", place); window.addEventListener("scroll", place, true);
+    document.addEventListener("keydown", onKey); el.addEventListener("click", done, true);
+    pop.querySelector("button").addEventListener("click", done);
+    pop.querySelector("button").focus({ preventScroll: true });
+    setTimeout(done, 15000); // not left on screen forever
+  });
+}
+
+async function runHighlights() {
+  if (!site || !site.features) return;
+  const seen = new Set(read(K.features, []));
+  const list = site.features.filter((f) => (!f.roles || f.roles.includes(ROLE)) && !seen.has(f.id));
+  for (const f of list) {
+    const el = await waitFor(f.target, 4000);
+    if (!el) continue;
+    await spotlight(f, el);
+    await sleep(400);
+  }
+}
+
+// ---------- updates ----------
+async function fetchSite() {
+  try {
+    const res = await fetch("whats-new.json?cb=" + Date.now(), { cache: "no-store" });
+    return res.ok ? await res.json() : null;
+  } catch (e) { return null; }
+}
+
+async function checkForUpdate() {
+  const fresh = await fetchSite();
+  if (!fresh || !fresh.version) return;
+  site = fresh;
+  if (loadedVersion === null) loadedVersion = fresh.version;
+  else if (fresh.version !== loadedVersion) needsReload = true;
+  updateDot();
+  // Tell the user once per version, as a system notification when the app is in the background.
+  if (versionUnseen() && read(K.versionNotified, null) !== fresh.version && document.hidden) {
+    const latest = fresh.releases && fresh.releases[0];
+    const sent = await showSystem("GenAlpha was updated", latest ? latest.title : "See what's new.", "update-" + fresh.version, "./login.html");
+    if (sent) write(K.versionNotified, fresh.version);
+  }
+}
+
+// ---------- notices ----------
+function startNotices() {
   const q = query(collection(db, "notices"), orderBy("date", "desc"), limit(30));
   onSnapshot(q, (snap) => {
-    items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    if (!localStorage.getItem(K_SEEN)) localStorage.setItem(K_SEEN, String(Date.now())); // first install: no flood
-    const seen = Number(localStorage.getItem(K_SEEN));
-    const fresh = items.filter((n) => ms(n) > seen);
-    setDot(fresh.length > 0);
-    if (!firstLoad) snap.docChanges().forEach((c) => { if (c.type === "added") systemNotify({ id: c.doc.id, ...c.doc.data() }); });
-    else fresh.forEach(systemNotify);
-    firstLoad = false;
-  }, () => {});
+    notices = snap.docs.map((d) => {
+      const n = d.data();
+      return { id: d.id, title: n.title || "", description: n.description || "", time: tsMs(n.createdAt) || tsMs(n.date) };
+    }).sort((a, b) => b.time - a.time);
+
+    if (firstSnapshotDone) {
+      const notified = read(K.noticeNotified, []);
+      snap.docChanges().forEach((c) => {
+        if (c.type !== "added" || notified.includes(c.doc.id)) return;
+        const n = c.doc.data();
+        notified.push(c.doc.id);
+        const title = n.title || "New notice";
+        if (document.hidden) showSystem("New notice", title, "notice-" + c.doc.id, "./" + (ROLE === "parent" ? "parent-dashboard.html" : "student-dashboard.html"));
+        else toast("New notice: " + title);
+      });
+      write(K.noticeNotified, notified.slice(-50));
+    }
+    firstSnapshotDone = true;
+    updateDot();
+  }, (error) => console.error("Notice updates stopped:", error));
 }
 
-function start() { mount(); listen(); setTimeout(askPermission, 1500); }
-if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+// ---------- start ----------
+async function main() {
+  if (!ROLE) return;
+  if (HAS_BELL) {
+    const actions = document.querySelector(".header-actions");
+    if (actions) {
+      bell = document.createElement("button"); bell.type = "button"; bell.id = "gaBell"; bell.className = "header-icon-btn ga-bell";
+      bell.setAttribute("aria-label", "Notifications"); bell.setAttribute("aria-haspopup", "dialog");
+      bell.innerHTML = BELL_SVG + '<span class="ga-dot" aria-hidden="true" hidden></span>';
+      dotEl = bell.querySelector(".ga-dot");
+      bell.addEventListener("click", openPanel);
+      actions.insertBefore(bell, actions.firstChild);
+    }
+    startNotices();
+    window.addEventListener("bottomnav:change", (e) => {
+      if (e.detail && e.detail.id === "notices") { seenTs = Date.now(); write(K.seenNotices, seenTs); updateDot(); }
+    });
+  }
+
+  if (permission() === "granted") registerSW();
+
+  await checkForUpdate();
+  setInterval(checkForUpdate, 5 * 60 * 1000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) checkForUpdate(); });
+
+  await sleep(1200);
+  await askPermission();   // permission first, then the highlights
+  await runHighlights();
+}
+
+main().catch((e) => console.error("Notifications could not start:", e));

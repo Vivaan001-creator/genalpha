@@ -138,3 +138,6 @@ a.header-icon-btn{ text-decoration:none; }
   html body .mini-stats-grid .mini-stat-card:not(.full-width) .mini-stat-info{ width:100%; min-width:0; }
   html body .mini-stats-grid .mini-stat-card:not(.full-width) .mini-stat-number{ overflow-wrap:anywhere; }
 }
+
+/* The decorative circle in dashboard headers must never let the header scroll sideways. */
+html body .top-header{ overflow:clip; }

@@ -3,6 +3,7 @@
 # them. Do not add a ".nojekyll" file, or this list stops working.
 exclude:
   - SECURITY-REPORT.md
+  - HOW-TO-ANNOUNCE-UPDATES.md
   - firestore.rules
   - storage.rules
   - firebase.json

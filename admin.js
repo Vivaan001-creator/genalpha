@@ -3204,7 +3204,6 @@ function openNoticeModal(noticeId) {
     if (existing) {
       document.getElementById("noticeTitle").value = existing.title || "";
       document.getElementById("noticeDescription").value = existing.description || "";
-      const fe = document.getElementById("noticeIsFeature"); if (fe) fe.checked = existing.type === "feature";
       if (existing.date && existing.date.toDate) {
         document.getElementById("noticeDate").value = existing.date.toDate().toISOString().slice(0, 10);
       }
@@ -3244,21 +3243,19 @@ async function saveNotice() {
     return;
   }
 
-  const featEl = document.getElementById("noticeIsFeature");
   const noticeData = {
     title,
     description,
-    date: Timestamp.fromDate(new Date(dateValue)),
-    type: featEl && featEl.checked ? "feature" : "notice"
+    date: Timestamp.fromDate(new Date(dateValue))
   };
-  if (!editingNoticeId) noticeData.createdAt = Timestamp.now();
 
   try {
 
     if (editingNoticeId) {
       await setDoc(doc(db, "notices", editingNoticeId), noticeData, { merge: true });
     } else {
-      await addDoc(collection(db, "notices"), noticeData);
+      // createdAt is the upload time. Devices use it to tell which notices are new.
+      await addDoc(collection(db, "notices"), { ...noticeData, createdAt: serverTimestamp() });
     }
 
     closeNoticeModal();
