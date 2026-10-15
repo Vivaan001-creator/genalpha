@@ -1,0 +1,225 @@
+// Teacher designs a multiple choice test, saves it as a draft, or publishes it.
+// Publishing writes the questions and the answer key to separate documents (see firestore.rules).
+import { db } from "./Firebase.js";
+import { collection, doc, getDoc, getDocs, setDoc, query, where, serverTimestamp, Timestamp }
+  from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { escapeHtml, tsMs, LETTERS, attemptId, fmtDuration, fmtDateTime } from "./tests-common.js";
+
+const $ = (id) => document.getElementById(id);
+const teacherId = localStorage.getItem("teacherDocId");
+const params = new URLSearchParams(window.location.search);
+let testId = params.get("id") || "";
+let teacherName = "";
+let uid = 0;
+
+const val = (id) => String($(id).value || "").trim();
+function setErr(key, msg) {
+  const e = $("e_" + key), w = $("w_" + key);
+  if (e) e.textContent = msg || "";
+  if (w) w.classList.toggle("invalid", !!msg);
+}
+function toLocalInput(ms) {
+  const d = new Date(ms - new Date(ms).getTimezoneOffset() * 60000);
+  return d.toISOString().slice(0, 16);
+}
+
+// ---------- questions ----------
+function addQuestion(data) {
+  const k = ++uid;
+  const wrap = document.createElement("section");
+  wrap.className = "te-q"; wrap.setAttribute("data-q", String(k));
+  let opts = "";
+  for (let i = 0; i < 4; i++) {
+    opts += '<div class="te-opt"><input type="radio" name="correct_' + k + '" value="' + i + '" aria-label="Option ' + LETTERS[i] + ' is the correct answer"' + (data && data.correct === i ? " checked" : "") + ">" +
+      '<label class="letter" for="o_' + k + "_" + i + '">' + LETTERS[i] + '</label><input type="text" id="o_' + k + "_" + i + '" maxlength="200" placeholder="Option ' + LETTERS[i] + '" value="' + escapeHtml(data && data.options && data.options[i] || "") + '"></div>';
+  }
+  wrap.innerHTML = '<div class="te-q-head"><h3>Question <span class="qn"></span></h3><button type="button" class="ep-btn te-mini" data-remove>Remove</button></div>' +
+    '<div class="ep-field"><label for="q_' + k + '">Question</label><textarea id="q_' + k + '" maxlength="500">' + escapeHtml(data && data.q || "") + "</textarea></div>" +
+    '<fieldset style="border:0;padding:0;margin:0"><legend style="font-weight:600;font-size:14px;margin:0 0 6px">Options. Tap the circle next to the correct one.</legend>' + opts + "</fieldset>" +
+    '<p class="ep-error" role="alert" data-err></p>';
+  $("questions").appendChild(wrap);
+  renumber();
+}
+
+function renumber() {
+  [...document.querySelectorAll("#questions .te-q")].forEach((el, i) => { el.querySelector(".qn").textContent = String(i + 1); });
+  updateTotals();
+}
+
+function updateTotals() {
+  const n = document.querySelectorAll("#questions .te-q").length;
+  const m = Math.max(0, parseInt($("f_marks").value, 10) || 0);
+  $("totals").textContent = n + (n === 1 ? " question" : " questions") + " &middot; ".replace("&middot;", "|") + m + (m === 1 ? " mark" : " marks") + " each | Total " + (n * m) + " marks";
+}
+
+function readQuestions() {
+  return [...document.querySelectorAll("#questions .te-q")].map((el) => {
+    const k = el.getAttribute("data-q");
+    const q = String(el.querySelector("textarea").value || "").trim();
+    const raw = [0, 1, 2, 3].map((i) => String($("o_" + k + "_" + i).value || "").trim());
+    const checked = el.querySelector('input[type=radio]:checked');
+    const correctRaw = checked ? parseInt(checked.value, 10) : -1;
+    const options = [], map = {};
+    raw.forEach((text, i) => { if (text) { map[i] = options.length; options.push(text); } });
+    return { el, q, options, correct: correctRaw >= 0 && map[correctRaw] !== undefined ? map[correctRaw] : -1, correctRaw, raw };
+  });
+}
+
+// ---------- validation ----------
+function validate(forPublish) {
+  ["subject", "class", "hours", "minutes", "start", "end", "marks"].forEach((k) => setErr(k, ""));
+  $("e_form").textContent = "";
+  let first = null;
+  const bad = (key, msg) => { setErr(key, msg); if (!first) first = $("w_" + key); };
+
+  if (val("f_subject").length < 2) bad("subject", "Enter the subject.");
+  if (!val("f_class")) bad("class", "Choose the class.");
+  const hours = parseInt($("f_hours").value, 10), mins = parseInt($("f_minutes").value, 10);
+  if (!(hours >= 0 && hours <= 5)) bad("hours", "Hours must be 0 to 5.");
+  if (!(mins >= 0 && mins <= 59)) bad("minutes", "Minutes must be 0 to 59.");
+  const duration = (hours || 0) * 60 + (mins || 0);
+  if (!first && (duration < 5 || duration > 300)) bad("minutes", "The test must be between 5 minutes and 5 hours long.");
+  const start = $("f_start").value ? new Date($("f_start").value).getTime() : NaN;
+  const end = $("f_end").value ? new Date($("f_end").value).getTime() : NaN;
+  if (isNaN(start)) bad("start", "Choose when the test starts.");
+  else if (forPublish && start < Date.now() - 2 * 60000) bad("start", "The start time must be now or later.");
+  if (isNaN(end)) bad("end", "Choose the last time students can start.");
+  else if (!isNaN(start) && end < start) bad("end", "This must be after the start time.");
+  const marks = parseInt($("f_marks").value, 10);
+  if (!(marks >= 1 && marks <= 20)) bad("marks", "Marks per question must be 1 to 20.");
+
+  const qs = readQuestions();
+  if (!qs.length) { $("e_form").textContent = "Add at least one question."; if (!first) first = $("addQ"); }
+  if (qs.length > 100) { $("e_form").textContent = "A test can have at most 100 questions."; if (!first) first = $("addQ"); }
+  qs.forEach((x, i) => {
+    const err = x.el.querySelector("[data-err]");
+    let msg = "";
+    if (x.q.length < 3) msg = "Write the question.";
+    else if (x.options.length < 2) msg = "Enter at least two options.";
+    else if (new Set(x.options.map((o) => o.toLowerCase())).size !== x.options.length) msg = "Two options are the same.";
+    else if (x.correctRaw < 0 || x.correct < 0) msg = "Select the correct answer (and make sure that option has text).";
+    err.textContent = msg;
+    if (msg && !first) first = x.el;
+  });
+  if (first) { first.scrollIntoView({ block: "center", behavior: "smooth" }); return null; }
+  return { duration, start, end, marks, qs };
+}
+
+// ---------- save ----------
+async function save(publish) {
+  const v = validate(publish);
+  if (!v) return;
+  const btns = [$("saveDraft"), $("publishBtn")];
+  btns.forEach((b) => { b.disabled = true; });
+  const labelPub = $("publishBtn").textContent;
+  $("publishBtn").textContent = publish ? "Publishing..." : labelPub;
+  try {
+    if (!testId) testId = doc(collection(db, "tests")).id;
+    const existing = await getDoc(doc(db, "tests", testId));
+    if (existing.exists() && existing.data().status === "published") { alert("This test is already published and cannot be changed."); btns.forEach((b) => { b.disabled = false; }); $("publishBtn").textContent = labelPub; return; }
+
+    const meta = {
+      subject: val("f_subject"), title: val("f_title"), class: val("f_class"),
+      durationMinutes: v.duration, startAt: Timestamp.fromMillis(v.start), endAt: Timestamp.fromMillis(v.end),
+      questionCount: v.qs.length, marksPerQuestion: v.marks, totalMarks: v.qs.length * v.marks,
+      status: publish ? "published" : "draft",
+      createdBy: teacherId, createdByName: teacherName,
+      updatedAt: serverTimestamp()
+    };
+    if (!existing.exists()) meta.createdAt = serverTimestamp();
+    if (publish) meta.publishedAt = serverTimestamp();
+    await setDoc(doc(db, "tests", testId), meta, { merge: true });
+    await setDoc(doc(db, "testPapers", testId), { questions: v.qs.map((x) => ({ q: x.q, options: x.options })) });
+    const answers = v.qs.map((x) => x.correct);
+    await setDoc(doc(db, "testKeys", testId), { testId, answers });
+
+    if (publish) {
+      // One copy of the key per student. A student can read theirs only after they submit.
+      const st = await getDocs(query(collection(db, "students"), where("class", "==", meta.class)));
+      for (const s of st.docs) await setDoc(doc(db, "testKeys", attemptId(testId, s.id)), { testId, roll: s.id, answers });
+      alert("Test published. Students in Class " + meta.class + " will see it on their dashboard.");
+      window.location.href = "teacher-tests.html";
+    } else {
+      window.history.replaceState(null, "", "teacher-test-edit.html?id=" + encodeURIComponent(testId));
+      alert("Draft saved.");
+      btns.forEach((b) => { b.disabled = false; });
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Could not save the test. Please check your internet connection and try again.");
+    btns.forEach((b) => { b.disabled = false; });
+  }
+  $("publishBtn").textContent = labelPub;
+}
+
+// ---------- load ----------
+async function init() {
+  if (!teacherId) { window.location.replace("teacher-login.html"); return; }
+  try {
+    const t = await getDoc(doc(db, "teachers", teacherId));
+    if (!t.exists()) { $("pageLoading").textContent = "Teacher record not found. Please log in again."; return; }
+    teacherName = t.data().name || "";
+    const cs = await getDocs(query(collection(db, "classes"), where("teacherEmail", "==", t.data().email)));
+    const classes = cs.docs.map((d) => d.id);
+    let existing = null, paper = null, key = null;
+    if (testId) {
+      const tSnap = await getDoc(doc(db, "tests", testId));
+      if (!tSnap.exists() || tSnap.data().createdBy !== teacherId) { $("pageLoading").textContent = "This test was not found."; return; }
+      existing = tSnap.data();
+      const pSnap = await getDoc(doc(db, "testPapers", testId)); paper = pSnap.exists() ? pSnap.data() : { questions: [] };
+      const kSnap = await getDoc(doc(db, "testKeys", testId)); key = kSnap.exists() ? kSnap.data().answers : [];
+      if (existing.class && !classes.includes(existing.class)) classes.push(existing.class);
+    }
+    if (!classes.length) { $("pageLoading").textContent = "No class is assigned to you yet. Ask the admin to assign one."; return; }
+    $("f_class").innerHTML = '<option value="">Select class</option>' + classes.map((c) => '<option value="' + escapeHtml(c) + '">Class ' + escapeHtml(c) + "</option>").join("");
+
+    if (existing && existing.status === "published") {
+      $("pageLoading").hidden = true; $("lockedNotice").hidden = false;
+      $("lockedReport").setAttribute("href", "teacher-test-report.html?id=" + encodeURIComponent(testId));
+      const host = document.createElement("div");
+      host.innerHTML = '<h2 class="t-head">' + escapeHtml(existing.subject) + ' &middot; Class ' + escapeHtml(existing.class) + "</h2>" +
+        '<p class="ep-hint">' + escapeHtml(fmtDuration(existing.durationMinutes)) + " | " + existing.totalMarks + " marks | Starts " + escapeHtml(fmtDateTime(tsMs(existing.startAt))) + "</p>" +
+        (paper.questions || []).map((q, i) => '<article class="t-q"><h3>Question ' + (i + 1) + '</h3><p class="t-qtext">' + escapeHtml(q.q) + '</p><ul class="t-options">' +
+          q.options.map((o, k) => '<li class="' + (k === key[i] ? "is-right" : "") + '"><b>' + LETTERS[k] + ".</b> <span>" + escapeHtml(o) + "</span>" + (k === key[i] ? '<em class="tag ok">Correct answer</em>' : "") + "</li>").join("") + "</ul></article>").join("");
+      $("main").appendChild(host);
+      return;
+    }
+
+    if (existing) {
+      $("f_subject").value = existing.subject || ""; $("f_title").value = existing.title || ""; $("f_class").value = existing.class || "";
+      $("f_hours").value = Math.floor((existing.durationMinutes || 60) / 60); $("f_minutes").value = (existing.durationMinutes || 60) % 60;
+      if (existing.startAt) $("f_start").value = toLocalInput(tsMs(existing.startAt));
+      if (existing.endAt) $("f_end").value = toLocalInput(tsMs(existing.endAt));
+      $("f_marks").value = existing.marksPerQuestion || 1;
+      (paper.questions || []).forEach((q, i) => addQuestion({ q: q.q, options: q.options, correct: key && key[i] !== undefined ? key[i] : -1 }));
+    } else {
+      const now = new Date(Date.now() + 60 * 60000); now.setMinutes(0, 0, 0);
+      $("f_start").value = toLocalInput(now.getTime());
+      $("f_end").value = toLocalInput(now.getTime() + 90 * 60000);
+      addQuestion();
+    }
+    $("pageLoading").hidden = true; $("editForm").hidden = false; updateTotals();
+  } catch (error) {
+    console.error(error);
+    $("pageLoading").textContent = "Could not load. Please go back and try again.";
+  }
+}
+
+$("addQ").addEventListener("click", () => { addQuestion(); const last = $("questions").lastElementChild; last.querySelector("textarea").focus(); });
+$("questions").addEventListener("click", (e) => {
+  const rm = e.target.closest("[data-remove]");
+  if (!rm) return;
+  if (document.querySelectorAll("#questions .te-q").length === 1) { alert("A test needs at least one question."); return; }
+  if (confirm("Remove this question?")) { rm.closest(".te-q").remove(); renumber(); }
+});
+$("f_marks").addEventListener("input", updateTotals);
+$("f_start").addEventListener("change", () => {
+  // Suggest a closing time of start + duration + 30 minutes when it is not yet later than the start.
+  const s = $("f_start").value ? new Date($("f_start").value).getTime() : NaN;
+  const e = $("f_end").value ? new Date($("f_end").value).getTime() : NaN;
+  if (!isNaN(s) && (isNaN(e) || e < s)) $("f_end").value = toLocalInput(s + 90 * 60000);
+});
+$("saveDraft").addEventListener("click", () => save(false));
+$("editForm").addEventListener("submit", (e) => { e.preventDefault(); if (confirm("Publish this test? It cannot be edited after this.")) save(true); });
+
+init();

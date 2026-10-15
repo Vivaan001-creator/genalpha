@@ -8,8 +8,9 @@
 // Limit: this works while the app or browser tab is alive. Notifications to a
 // phone that has the app fully closed need a push server (see the report).
 import { db } from "./Firebase.js";
-import { collection, query, orderBy, limit, onSnapshot }
+import { collection, query, orderBy, limit, where, onSnapshot, doc, getDoc }
   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { fmtDateTime, fmtDuration } from "./tests-common.js";
 
 const marker = document.querySelector("script[data-notify-role]");
 const ROLE = marker ? marker.getAttribute("data-notify-role") : "";
@@ -22,7 +23,8 @@ const K = {
   version: "ga_n_version_" + ROLE,
   versionNotified: "ga_n_vnotified_" + ROLE,
   features: "ga_n_features_" + ROLE,
-  noticeNotified: "ga_n_nnotified_" + ROLE
+  noticeNotified: "ga_n_nnotified_" + ROLE,
+  testNotified: "ga_n_tnotified_" + ROLE
 };
 
 const read = (k, fallback) => { try { const v = localStorage.getItem(k); return v === null ? fallback : JSON.parse(v); } catch (e) { return fallback; } };
@@ -37,6 +39,8 @@ const permission = () => (supported ? Notification.permission : "unsupported");
 
 // ---------- state ----------
 let notices = [];            // { id, title, description, time }
+let tests = [];              // { id, subject, title, startAt, durationMinutes, totalMarks, time }  (published tests for this class)
+let firstTestsDone = false;
 let seenTs = read(K.seenNotices, 0);
 if (!seenTs) { seenTs = Date.now(); write(K.seenNotices, seenTs); } // old notices on a new device are not "new"
 let site = null;             // parsed whats-new.json
@@ -47,6 +51,8 @@ let panelOpen = false;
 let firstSnapshotDone = false;
 
 const unseenNotices = () => notices.filter((n) => n.time > seenTs);
+const unseenTests = () => tests.filter((t) => t.time > seenTs);
+const TESTS_PAGE = ROLE === "parent" ? "parent-tests.html" : "student-tests.html";
 const versionUnseen = () => !!(site && site.version && read(K.version, null) !== site.version);
 
 // ---------- small UI helpers ----------
@@ -81,7 +87,7 @@ async function showSystem(title, body, tag, url) {
 
 // ---------- dot / badge ----------
 function updateDot() {
-  const count = (HAS_BELL ? unseenNotices().length : 0) + (versionUnseen() ? 1 : 0);
+  const count = (HAS_BELL ? unseenNotices().length + unseenTests().length : 0) + (versionUnseen() ? 1 : 0);
   if (bell && dotEl) {
     dotEl.hidden = count === 0;
     bell.setAttribute("aria-label", count ? "Notifications, " + count + " new" : "Notifications");
@@ -131,6 +137,7 @@ function openPanel() {
   panelOpen = true;
   const opener = document.activeElement;
   const newNoticeIds = new Set(unseenNotices().map((n) => n.id));
+  const newTestIds = new Set(unseenTests().map((t) => t.id));
   const wasNewVersion = versionUnseen();
 
   const backdrop = document.createElement("div"); backdrop.className = "ga-backdrop";
@@ -140,6 +147,25 @@ function openPanel() {
   let html = '<div class="ga-sheet-head"><h2 id="gaPanelTitle">Notifications</h2><button type="button" class="ga-close" aria-label="Close">&times;</button></div>';
   html += permissionRow();
 
+  if (HAS_BELL) {
+    html += '<div class="ga-sec">Notices</div>';
+    if (!notices.length) html += '<p class="ga-empty">No notices yet.</p>';
+    notices.slice(0, 10).forEach((n) => {
+      html += '<div class="ga-item"><h3>' + esc(n.title || "Notice") + (newNoticeIds.has(n.id) ? '<span class="ga-new">NEW</span>' : "") + "</h3>" +
+        (n.description ? "<p>" + esc(n.description) + "</p>" : "") + '<span class="ga-when">' + esc(dateText(n.time)) + "</span></div>";
+    });
+    html += '<button type="button" class="ga-link" id="gaViewAll">View all notices</button>';
+
+    html += '<div class="ga-sec">Tests</div>';
+    if (!tests.length) html += '<p class="ga-empty">No tests yet.</p>';
+    tests.slice(0, 5).forEach((t) => {
+      html += '<div class="ga-item"><h3>' + esc(t.subject || "Test") + (newTestIds.has(t.id) ? '<span class="ga-new">NEW</span>' : "") + "</h3>" +
+        "<p>" + esc(fmtDuration(t.durationMinutes)) + " | " + esc(String(t.totalMarks || 0)) + " marks</p>" +
+        '<span class="ga-when">Starts ' + esc(fmtDateTime(t.startMs)) + "</span></div>";
+    });
+    html += '<button type="button" class="ga-link" id="gaViewTests">' + (ROLE === "parent" ? "View test reports" : "View tests") + "</button>";
+  }
+  // Notices and tests first (what people open the bell for), release notes after.
   html += '<div class="ga-sec">App updates</div>';
   if (!releases.length) html += '<p class="ga-empty">No updates yet.</p>';
   releases.forEach((r, i) => {
@@ -149,15 +175,6 @@ function openPanel() {
       (i === 0 && needsReload ? '<p style="margin-top:10px"><button type="button" class="ga-btn primary" id="gaReload">Reload to update</button></p>' : "") + "</div>";
   });
 
-  if (HAS_BELL) {
-    html += '<div class="ga-sec">Notices</div>';
-    if (!notices.length) html += '<p class="ga-empty">No notices yet.</p>';
-    notices.slice(0, 10).forEach((n) => {
-      html += '<div class="ga-item"><h3>' + esc(n.title || "Notice") + (newNoticeIds.has(n.id) ? '<span class="ga-new">NEW</span>' : "") + "</h3>" +
-        (n.description ? "<p>" + esc(n.description) + "</p>" : "") + '<span class="ga-when">' + esc(dateText(n.time)) + "</span></div>";
-    });
-    html += '<button type="button" class="ga-link" id="gaViewAll">View all notices</button>';
-  }
   sheet.innerHTML = html;
   document.body.appendChild(backdrop); document.body.appendChild(sheet);
 
@@ -174,6 +191,8 @@ function openPanel() {
   if (enable) enable.addEventListener("click", async () => { await requestPermissionFlow(); close(); openPanel(); });
   const reload = sheet.querySelector("#gaReload");
   if (reload) reload.addEventListener("click", () => window.location.reload());
+  const viewTests = sheet.querySelector("#gaViewTests");
+  if (viewTests) viewTests.addEventListener("click", () => { window.location.href = TESTS_PAGE; });
   const all = sheet.querySelector("#gaViewAll");
   if (all) all.addEventListener("click", () => { close(); if (window.BottomNav && window.BottomNav.go) window.BottomNav.go("notices"); });
   sheet.querySelector(".ga-close").focus();
@@ -329,6 +348,41 @@ function startNotices() {
   }, (error) => console.error("Notice updates stopped:", error));
 }
 
+// ---------- new tests (published by a teacher for this student's class) ----------
+async function startTests() {
+  const roll = ROLE === "parent" ? localStorage.getItem("parentActiveRoll") : localStorage.getItem("studentRoll");
+  if (!roll) return;
+  let cls = ROLE === "student" ? localStorage.getItem("studentClass") : "";
+  if (!cls) {
+    try { const s = await getDoc(doc(db, "students", roll)); cls = s.exists() ? s.data().class : ""; } catch (e) { return; }
+  }
+  if (!cls) return;
+  const q = query(collection(db, "tests"), where("class", "==", cls), where("status", "==", "published"));
+  onSnapshot(q, (snap) => {
+    tests = snap.docs.map((d) => {
+      const t = d.data();
+      return { id: d.id, subject: t.subject || "", durationMinutes: t.durationMinutes, totalMarks: t.totalMarks,
+        startMs: tsMs(t.startAt), time: tsMs(t.publishedAt) || tsMs(t.createdAt) };
+    }).sort((a, b) => b.time - a.time);
+
+    if (firstTestsDone) {
+      const notified = read(K.testNotified, []);
+      snap.docChanges().forEach((c) => {
+        if (c.type !== "added" || notified.includes(c.doc.id)) return;
+        const t = c.doc.data();
+        notified.push(c.doc.id);
+        const subject = t.subject || "Test";
+        const when = fmtDateTime(tsMs(t.startAt));
+        if (document.hidden) showSystem("New test: " + subject, "Starts " + when, "test-" + c.doc.id, "./" + TESTS_PAGE);
+        else toast("New test: " + subject + ", starts " + when);
+      });
+      write(K.testNotified, notified.slice(-50));
+    }
+    firstTestsDone = true;
+    updateDot();
+  }, (error) => console.error("Test updates stopped:", error));
+}
+
 // ---------- start ----------
 async function main() {
   if (!ROLE) return;
@@ -343,6 +397,7 @@ async function main() {
       actions.insertBefore(bell, actions.firstChild);
     }
     startNotices();
+    startTests();
     window.addEventListener("bottomnav:change", (e) => {
       if (e.detail && e.detail.id === "notices") { seenTs = Date.now(); write(K.seenNotices, seenTs); updateDot(); }
     });

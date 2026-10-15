@@ -39,6 +39,10 @@ Everything is controlled by one file: `whats-new.json`.
 
 Post a notice from the Notice Board as usual. On a student or parent device that is open, a message appears. The bell and the Notices tab get a blinking red dot until the notice has been seen.
 
+## New tests
+
+When a teacher publishes a test, students and parents of that class get the same treatment: a message if the app is open, a blinking red dot on the bell, and a New test entry in the bell panel. A device with notifications allowed also gets a phone notification if the app is in the background.
+
 ## Limit
 
 Notifications reach a phone only while the app or browser tab is open or in the background. Waking a phone that has the app fully closed needs a push server (Firebase Cloud Messaging with a Cloud Function, which requires the Blaze plan).
