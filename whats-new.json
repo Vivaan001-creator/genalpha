@@ -1,6 +1,16 @@
 {
-  "version": "2026.10.14",
+  "version": "2026.10.15",
   "releases": [
+    {
+      "version": "2026.10.15",
+      "date": "2026-10-15",
+      "title": "Faster test creation",
+      "notes": [
+        "Teachers can paste questions copied from Word, WhatsApp, a PDF, Excel or an AI chat, and the app reads them.",
+        "Upload a CSV file from Excel, with a sample file to download.",
+        "Ask ChatGPT, Claude or Gemini to write the questions: the app prepares the request in the right format."
+      ]
+    },
     {
       "version": "2026.10.14",
       "date": "2026-10-14",

@@ -4,6 +4,7 @@ import { db } from "./Firebase.js";
 import { collection, doc, getDoc, getDocs, setDoc, query, where, serverTimestamp, Timestamp }
   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { escapeHtml, tsMs, LETTERS, attemptId, fmtDuration, fmtDateTime } from "./tests-common.js";
+import { readQuestions as parsePasted, SAMPLE_TEXT, SAMPLE_CSV, buildAiPrompt } from "./question-import.js";
 
 const $ = (id) => document.getElementById(id);
 const teacherId = localStorage.getItem("teacherDocId");
@@ -39,6 +40,7 @@ function addQuestion(data) {
     '<p class="ep-error" role="alert" data-err></p>';
   $("questions").appendChild(wrap);
   renumber();
+  return wrap;
 }
 
 function renumber() {
@@ -219,6 +221,101 @@ $("f_start").addEventListener("change", () => {
   const e = $("f_end").value ? new Date($("f_end").value).getTime() : NaN;
   if (!isNaN(s) && (isNaN(e) || e < s)) $("f_end").value = toLocalInput(s + 90 * 60000);
 });
+
+// ---------- adding questions faster: paste, file, or an AI ----------
+let pending = [];
+const isBlankBlock = (el) => !String(el.querySelector("textarea").value).trim() && [...el.querySelectorAll('input[type=text]')].every((i) => !String(i.value).trim());
+
+function toggle(btn) {
+  const open = btn.getAttribute("aria-expanded") === "true";
+  btn.setAttribute("aria-expanded", open ? "false" : "true");
+  $(btn.getAttribute("aria-controls")).hidden = open;
+}
+document.querySelectorAll(".qi-toggle").forEach((b) => b.addEventListener("click", () => toggle(b)));
+
+function showPreview(result) {
+  $("qiDone").textContent = "";
+  const qs = result.questions;
+  pending = qs;
+  if (!qs.length) {
+    $("qiPreview").hidden = false;
+    $("qiSummary").textContent = (result.warnings && result.warnings[0]) || "No questions were found.";
+    $("qiList").innerHTML = ""; $("qiAdd").hidden = true;
+    return;
+  }
+  const needs = qs.filter((q) => q.warnings.length).length;
+  $("qiAdd").hidden = false;
+  $("qiAdd").textContent = "Add " + qs.length + (qs.length === 1 ? " question" : " questions");
+  $("qiSummary").textContent = qs.length + (qs.length === 1 ? " question found" : " questions found") + (needs ? ". " + needs + (needs === 1 ? " needs" : " need") + " attention." : ". All look good.");
+  $("qiList").innerHTML = qs.map((q, i) => {
+    const ok = !q.warnings.length;
+    const text = q.q.length > 90 ? q.q.slice(0, 90) + "..." : q.q;
+    return '<li class="' + (ok ? "ok" : "warn") + '"><b>' + (i + 1) + ".</b> <span>" + escapeHtml(text) + "</span><em>" +
+      (ok ? q.options.length + " options. Answer " + LETTERS[q.correct] : escapeHtml(q.warnings[0])) + "</em></li>";
+  }).join("");
+  $("qiPreview").hidden = false;
+  $("qiPreview").scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+$("qiRead").addEventListener("click", () => {
+  const text = $("qiText").value;
+  if (!text.trim()) { $("qiDone").textContent = "Paste your questions in the box first."; $("qiText").focus(); return; }
+  showPreview(parsePasted(text));
+});
+$("qiExample").addEventListener("click", () => { $("qiText").value = SAMPLE_TEXT; $("qiText").focus(); });
+$("qiCancel").addEventListener("click", () => { pending = []; $("qiPreview").hidden = true; });
+
+$("qiFileInput").addEventListener("change", async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  if (file.size > 1024 * 1024) { $("qiDone").textContent = "That file is too big. Please use a file under 1 MB."; return; }
+  try { showPreview(parsePasted(await file.text(), file.name)); }
+  catch (err) { console.error(err); $("qiDone").textContent = "Could not read that file. Try Save as CSV, or paste the questions instead."; }
+});
+
+$("qiSample").addEventListener("click", () => {
+  const url = URL.createObjectURL(new Blob([SAMPLE_CSV], { type: "text/csv" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "sample-questions.csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+
+function refreshPrompt() {
+  $("qiPrompt").value = buildAiPrompt({ subject: val("f_subject"), cls: val("f_class"), topic: val("qiTopic"), count: $("qiCount").value });
+}
+["qiTopic", "qiCount", "f_subject", "f_class"].forEach((id) => $(id).addEventListener("input", refreshPrompt));
+$("f_class").addEventListener("change", refreshPrompt);
+$("qiBtnAi").addEventListener("click", refreshPrompt);
+$("qiCopy").addEventListener("click", async () => {
+  refreshPrompt();
+  const box = $("qiPrompt");
+  try { await navigator.clipboard.writeText(box.value); }
+  catch (e) { box.select(); try { document.execCommand("copy"); } catch (e2) { /* the text is selected so it can be copied by hand */ } }
+  $("qiCopied").textContent = "Copied. Now paste it into ChatGPT, Claude or Gemini.";
+});
+
+$("qiAdd").addEventListener("click", () => {
+  if (!pending.length) return;
+  const existing = [...document.querySelectorAll("#questions .te-q")];
+  if (existing.length === 1 && isBlankBlock(existing[0])) existing[0].remove();
+  const room = 100 - document.querySelectorAll("#questions .te-q").length;
+  const take = pending.slice(0, Math.max(0, room));
+  let first = null;
+  take.forEach((q) => {
+    const block = addQuestion({ q: q.q.slice(0, 500), options: q.options.map((o) => o.slice(0, 200)), correct: q.correct });
+    if (!first) first = block;
+    if (q.warnings.length) block.querySelector("[data-err]").textContent = q.warnings[0];
+  });
+  const needs = take.filter((q) => q.warnings.length).length;
+  $("qiDone").textContent = take.length + (take.length === 1 ? " question was added below." : " questions were added below.") +
+    (needs ? " " + needs + " still need" + (needs === 1 ? "s" : "") + " a correct answer or a fix." : " Check them, then publish.") +
+    (take.length < pending.length ? " The test can have at most 100 questions, so the rest were skipped." : "");
+  pending = []; $("qiPreview").hidden = true; $("qiText").value = "";
+  if (first) first.scrollIntoView({ block: "start", behavior: "smooth" });
+});
+
 $("saveDraft").addEventListener("click", () => save(false));
 $("editForm").addEventListener("submit", (e) => { e.preventDefault(); if (confirm("Publish this test? It cannot be edited after this.")) save(true); });
 

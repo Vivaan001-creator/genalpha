@@ -55,6 +55,50 @@
       <div class="ep-field" id="w_marks"><label for="f_marks">Marks for each question <span class="req" aria-hidden="true">*</span></label>
         <input type="number" id="f_marks" min="1" max="20" step="1" value="1" inputmode="numeric" required aria-describedby="e_marks"><p class="ep-error" id="e_marks" role="alert"></p></div>
     </section>
+    <section class="ep-card" aria-labelledby="sq">
+      <h2 id="sq">Add questions faster</h2>
+      <p class="ep-hint">You do not have to type every question. Choose one way.</p>
+
+      <div class="qi-group">
+        <button type="button" class="qi-toggle" id="qiBtnPaste" aria-expanded="true" aria-controls="qiPaste"><span><strong>Paste questions</strong><small>From Word, WhatsApp, a PDF, Excel or an AI chat</small></span><i aria-hidden="true">&#9662;</i></button>
+        <div class="qi-panel" id="qiPaste">
+          <label class="qi-label" for="qiText">Paste your questions here</label>
+          <textarea id="qiText" rows="9" placeholder="1. What is 7 x 8?&#10;A) 54&#10;B) 56&#10;C) 58&#10;D) 64&#10;Answer: B&#10;&#10;2. Next question..."></textarea>
+          <p class="ep-help">Write each question with options A, B, C, D and the correct answer, like <b>Answer: B</b>. Or put a star on the correct option, like <b>*B) 56</b>. Many other styles work too.</p>
+          <div class="ep-actions"><button type="button" class="ep-btn te-mini" id="qiExample">Show an example</button><button type="button" class="ep-btn primary" id="qiRead">Read questions</button></div>
+        </div>
+      </div>
+
+      <div class="qi-group">
+        <button type="button" class="qi-toggle" id="qiBtnFile" aria-expanded="false" aria-controls="qiFile"><span><strong>Upload a file</strong><small>A CSV file from Excel, or a text file</small></span><i aria-hidden="true">&#9662;</i></button>
+        <div class="qi-panel" id="qiFile" hidden>
+          <label class="qi-label" for="qiFileInput">Choose a .csv or .txt file</label>
+          <input type="file" id="qiFileInput" accept=".csv,.tsv,.txt,text/csv,text/plain">
+          <p class="ep-help">Not sure how to prepare it? Download the sample, type your questions in Excel, then use Save as CSV.</p>
+          <div class="ep-actions"><button type="button" class="ep-btn te-mini" id="qiSample">Download sample file</button></div>
+        </div>
+      </div>
+
+      <div class="qi-group">
+        <button type="button" class="qi-toggle" id="qiBtnAi" aria-expanded="false" aria-controls="qiAi"><span><strong>Ask an AI to write them</strong><small>ChatGPT, Claude or Gemini, free to use</small></span><i aria-hidden="true">&#9662;</i></button>
+        <div class="qi-panel" id="qiAi" hidden>
+          <div class="ep-field"><label for="qiTopic">Topic (optional)</label><input type="text" id="qiTopic" maxlength="80" placeholder="For example: Fractions"></div>
+          <div class="ep-field"><label for="qiCount">How many questions?</label><input type="number" id="qiCount" min="1" max="50" value="10" inputmode="numeric"></div>
+          <ol class="qi-steps"><li>Tap <b>Copy the request</b>.</li><li>Open ChatGPT, Claude or Gemini and paste it.</li><li>Copy the answer it gives you and paste it into <b>Paste questions</b> above.</li></ol>
+          <label class="qi-label" for="qiPrompt">The request</label>
+          <textarea id="qiPrompt" rows="6" readonly></textarea>
+          <div class="ep-actions"><button type="button" class="ep-btn primary" id="qiCopy">Copy the request</button></div>
+          <p class="ep-help" id="qiCopied" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+
+      <div class="qi-preview" id="qiPreview" hidden aria-live="polite">
+        <h3 id="qiSummary"></h3>
+        <ul class="qi-list" id="qiList"></ul>
+        <div class="ep-actions"><button type="button" class="ep-btn" id="qiCancel">Cancel</button><button type="button" class="ep-btn primary" id="qiAdd">Add the questions</button></div>
+      </div>
+      <p class="ep-help" id="qiDone" role="status" aria-live="polite"></p>
+    </section>
     <section aria-labelledby="s2">
       <h2 class="t-head" id="s2">Questions</h2>
       <p class="ep-help" id="totals" style="margin:-4px 0 12px;font-size:14px" aria-live="polite"></p>
