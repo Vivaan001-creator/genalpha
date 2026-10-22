@@ -1,5 +1,6 @@
 // Shared by every online test page: formatting, the test card, and the report view.
 import { escapeHtml } from "./profile-utils.js";
+import { tr } from "./tests-i18n.js";
 export { escapeHtml };
 
 export const tsMs = (v) => (v && typeof v.toMillis === "function" ? v.toMillis() : (v && typeof v.toDate === "function" ? v.toDate().getTime() : (typeof v === "number" ? v : 0)));
@@ -108,20 +109,21 @@ export function reportHTML({ test, paper, key, submission, lang }) {
   const g = gradeAnswers(answers, key, mpq);
   const total = test.totalMarks || questions.length * mpq;
   const pct = total ? Math.round((g.score / total) * 100) : 0;
-  let html = '<section class="t-summary" aria-label="Score summary"><p class="t-score"><span>' + g.score + '</span> / ' + total + ' marks</p>' +
+  const L = lang === "hi" ? "hi" : "en";
+  let html = '<section class="t-summary" aria-label="' + escapeHtml(tr(L, "scoreSummary")) + '"><p class="t-score"' + (L === "hi" ? ' lang="hi"' : "") + '>' + tr(L, "outOf", { s: "<span>" + g.score + "</span>", t: total }) + '</p>' +
     '<p class="t-pct">' + pct + '%</p>' +
-    '<ul class="t-counts"><li><strong>' + g.correct + '</strong> correct</li><li><strong>' + g.wrong + '</strong> wrong</li><li><strong>' + g.skipped + '</strong> not answered</li></ul></section>';
+    '<ul class="t-counts"' + (L === "hi" ? ' lang="hi"' : "") + '><li><strong>' + g.correct + '</strong> ' + tr(L, "correct") + '</li><li><strong>' + g.wrong + '</strong> ' + tr(L, "wrong") + '</li><li><strong>' + g.skipped + '</strong> ' + tr(L, "notAnswered") + '</li></ul></section>';
   questions.forEach((q, i) => {
     const right = key ? key[i] : -1, mine = answers[i] !== undefined ? answers[i] : -1;
     const verdict = mine === -1 ? "skipped" : (mine === right ? "right" : "wrong");
     const pq = pickLang(q, lang || "en"), hiAttr = pq.lang === "hi" ? ' lang="hi"' : "";
-    const verdictText = verdict === "right" ? "Correct" : (verdict === "wrong" ? "Wrong" : "Not answered");
-    html += '<article class="t-q ' + verdict + '"><header><h3>Question ' + (i + 1) + '</h3><span class="t-verdict ' + verdict + '">' + verdictText + (verdict === "right" ? " +" + mpq : "") + "</span></header>" +
+    const verdictText = tr(L, verdict === "right" ? "vCorrect" : (verdict === "wrong" ? "vWrong" : "vSkipped"));
+    html += '<article class="t-q ' + verdict + '"><header><h3' + (L === "hi" ? ' lang="hi"' : "") + '>' + tr(L, "question", { i: i + 1 }) + '</h3><span class="t-verdict ' + verdict + '"' + (L === "hi" ? ' lang="hi"' : "") + '>' + verdictText + (verdict === "right" ? " +" + mpq : "") + "</span></header>" +
       '<p class="t-qtext"' + hiAttr + '>' + escapeHtml(pq.q) + "</p><ul class=\"t-options\">";
     pq.options.forEach((opt, k) => {
       const isRight = k === right, isMine = k === mine;
-      const tag = isRight ? '<em class="tag ok">Correct answer</em>' : (isMine ? '<em class="tag bad">Your answer</em>' : "");
-      const extra = isRight && isMine ? '<em class="tag mine">Your answer</em>' : "";
+      const tag = isRight ? '<em class="tag ok"' + (L === "hi" ? ' lang="hi"' : "") + '>' + tr(L, "tagRight") + '</em>' : (isMine ? '<em class="tag bad"' + (L === "hi" ? ' lang="hi"' : "") + '>' + tr(L, "tagMine") + '</em>' : "");
+      const extra = isRight && isMine ? '<em class="tag mine"' + (L === "hi" ? ' lang="hi"' : "") + '>' + tr(L, "tagMine") + '</em>' : "";
       html += '<li class="' + (isRight ? "is-right" : (isMine ? "is-wrong" : "")) + '"><b>' + LETTERS[k] + '.</b> <span' + hiAttr + '>' + escapeHtml(opt) + "</span>" + tag + extra + "</li>";
     });
     html += "</ul></article>";

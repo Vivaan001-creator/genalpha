@@ -1,7 +1,7 @@
 // Report for one test and one student. Shown to the student and to their parent.
 import { db } from "./Firebase.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { escapeHtml, tsMs, fmtDay, fmtDuration, reportHTML, attemptId, getLang, paperHasHindi, mountLangToggle } from "./tests-common.js";
+import { escapeHtml, tsMs, fmtDay, fmtDuration, reportHTML, attemptId, getLang, setLang } from "./tests-common.js";
 import { normalizeMobile } from "./profile-utils.js";
 
 const $ = (id) => document.getElementById(id);
@@ -42,11 +42,10 @@ function say(text) { $("pageLoading").hidden = true; const m = $("message"); m.h
       (left ? '<div class="ep-readonly-row"><span>Left the test screen</span><span>' + left + (left === 1 ? " time" : " times") + "</span></div>" : "");
     let lang = getLang();
     const draw = () => { $("body").innerHTML = reportHTML({ test, paper, key, submission: sub, lang }); };
-    if (paperHasHindi(paper)) {
-      $("langHost").hidden = false;
-      mountLangToggle($("langHost"), lang, (l) => { lang = l; draw(); });
-    }
-    draw();
+    const btn = $("langBtn");
+    const label = () => { btn.textContent = lang === "hi" ? "English" : "\u0939\u093f\u0928\u094d\u0926\u0940"; btn.setAttribute("lang", lang === "hi" ? "en" : "hi"); document.documentElement.lang = lang === "hi" ? "hi" : "en-IN"; };
+    btn.addEventListener("click", () => { lang = lang === "hi" ? "en" : "hi"; setLang(lang); label(); draw(); });
+    label(); draw();
     $("pageLoading").hidden = true; $("content").hidden = false;
   } catch (error) {
     console.error(error);

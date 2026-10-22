@@ -134,3 +134,10 @@ html[data-theme="dark"] .t-chip{ background:#262d52; color:#b7bcdc; } html[data-
 .te-hi .te-opt .letter{ font-weight:700; width:22px; flex-shrink:0; margin-left:30px; }
 .te-hi textarea, .te-hi .te-opt input[type=text]{ font-size:16px; }
 .hi-alt{ display:block; font-size:13px; color:var(--ep-soft); }
+
+/* ---- language button in the header, and Hindi page font ---- */
+.lang-btn{ flex-shrink:0; min-height:40px; min-width:64px; padding:6px 14px; border:1.5px solid currentColor; border-radius:999px; background:transparent; color:inherit; font:600 14px/1.2 Inter, sans-serif; cursor:pointer; }
+.lang-btn:focus-visible{ outline:3px solid var(--ep-focus); outline-offset:2px; }
+html[lang="hi"] body, html[lang="hi"] h1, html[lang="hi"] h2, html[lang="hi"] h3, html[lang="hi"] button, html[lang="hi"] input, html[lang="hi"] textarea{
+  font-family:Inter,"Noto Sans Devanagari","Nirmala UI","Mangal",system-ui,sans-serif; }
+html[lang="hi"] body{ line-height:1.65; }

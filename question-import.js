@@ -257,11 +257,10 @@ C) Kolkata
 D) Chennai
 Answer: B`;
 
-// The Hindi columns are optional. Leave them out for an English-only test.
-export const SAMPLE_CSV = 'Question,Option A,Option B,Option C,Option D,Correct answer,Question (Hindi),Option A (Hindi),Option B (Hindi),Option C (Hindi),Option D (Hindi)\n' +
-  '"What is 7 x 8?",54,56,58,64,B,"7 x 8 \u0915\u093f\u0924\u0928\u093e \u0939\u094b\u0924\u093e \u0939\u0948?",54,56,58,64\n' +
-  '"Which of these is a prime number?",9,15,17,21,C,"\u0907\u0928\u092e\u0947\u0902 \u0938\u0947 \u0915\u094c\u0928-\u0938\u0940 \u0905\u092d\u093e\u091c\u094d\u092f \u0938\u0902\u0916\u094d\u092f\u093e \u0939\u0948?",9,15,17,21\n' +
-  '"What is the capital of India?",Mumbai,New Delhi,Kolkata,Chennai,B,"\u092d\u093e\u0930\u0924 \u0915\u0940 \u0930\u093e\u091c\u0927\u093e\u0928\u0940 \u0915\u094d\u092f\u093e \u0939\u0948?","\u092e\u0941\u0902\u092c\u0908","\u0928\u0908 \u0926\u093f\u0932\u094d\u0932\u0940","\u0915\u094b\u0932\u0915\u093e\u0924\u093e","\u091a\u0947\u0928\u094d\u0928\u0908"\n';
+export const SAMPLE_CSV = 'Question,Option A,Option B,Option C,Option D,Correct answer\n' +
+  '"What is 7 x 8?",54,56,58,64,B\n' +
+  '"Which of these is a prime number?",9,15,17,21,C\n' +
+  '"What is the capital of India?",Mumbai,New Delhi,Kolkata,Chennai,B\n';
 
 export function buildAiPrompt({ subject, cls, topic, count }) {
   const n = Math.max(1, Math.min(50, parseInt(count, 10) || 10));

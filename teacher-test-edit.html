@@ -6,7 +6,7 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Design a Test - GenAlpha</title>
-<meta name="description" content="Design multiple choice questions for one class and section, in English and Hindi, set time and marks, and publish.">
+<meta name="description" content="Design multiple choice questions for one class and section, set time and marks, and publish.">
 <meta name="theme-color" content="#0e1326">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -14,7 +14,6 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="edit-profile.css">
 <link rel="stylesheet" href="site.css">
 <link rel="stylesheet" href="tests.css">
@@ -92,19 +91,6 @@
           <textarea id="qiPrompt" rows="6" readonly></textarea>
           <div class="ep-actions"><button type="button" class="ep-btn primary" id="qiCopy">Copy the request</button></div>
           <p class="ep-help" id="qiCopied" role="status" aria-live="polite"></p>
-        </div>
-      </div>
-
-      <div class="qi-group">
-        <button type="button" class="qi-toggle" id="qiBtnHi" aria-expanded="false" aria-controls="qiHi"><span><strong>Add the Hindi version</strong><small>Students can switch between English and <span lang="hi">\u0939\u093f\u0928\u094d\u0926\u0940</span> while they take the test</small></span><i aria-hidden="true">&#9662;</i></button>
-        <div class="qi-panel" id="qiHi" hidden>
-          <ol class="qi-steps"><li>Add your English questions first.</li><li>Tap <b>Copy the request</b> and paste it into ChatGPT, Claude or Gemini.</li><li>Paste the Hindi answer below and tap <b>Add Hindi to my questions</b>.</li></ol>
-          <div class="ep-actions"><button type="button" class="ep-btn primary" id="hiCopy">Copy the request</button></div>
-          <label class="qi-label" for="hiText">Paste the Hindi questions here</label>
-          <textarea id="hiText" rows="8" lang="hi" placeholder="1. 7 x 8 \u0915\u093f\u0924\u0928\u093e \u0939\u094b\u0924\u093e \u0939\u0948?&#10;A) 54&#10;B) 56&#10;C) 58&#10;D) 64&#10;Answer: B"></textarea>
-          <p class="ep-help">Same order and same options as the English questions. You can also type the Hindi by hand under each question, or use the Hindi columns in the CSV sample.</p>
-          <div class="ep-actions"><button type="button" class="ep-btn primary" id="hiApply">Add Hindi to my questions</button></div>
-          <p class="ep-help" id="hiDone" role="status" aria-live="polite"></p>
         </div>
       </div>
 

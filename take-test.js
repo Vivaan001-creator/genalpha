@@ -5,11 +5,13 @@
 //   3. If the student leaves the screen (other app, other tab, back, reload) the answers and
 //      the verification are erased and they must verify again. The timer keeps running.
 //   4. Submit saves the answers once. The answer key for that student can be read only after that.
+// The button at the top right switches the whole page between English and Hindi.
+// Questions and options are shown as the teacher typed them.
 import { db } from "./Firebase.js";
 import { doc, getDoc, setDoc, updateDoc, increment, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { escapeHtml, tsMs, fmtDateTime, fmtDuration, fmtCountdown, marksText, openState, LETTERS, attemptId, reportHTML,
-  testIsForStudent, getLang, pickLang, hasHindi, paperHasHindi, mountLangToggle } from "./tests-common.js";
+import { escapeHtml, tsMs, fmtDateTime, fmtCountdown, openState, LETTERS, attemptId, reportHTML, testIsForStudent, getLang, setLang, pickLang } from "./tests-common.js";
+import { tr } from "./tests-i18n.js";
 import { normalizeMobile, toISODateInput } from "./profile-utils.js";
 
 const $ = (id) => document.getElementById(id);
@@ -22,8 +24,46 @@ const GRACE_MS = 2 * 60000;
 let student = null, test = null, attempt = null, paper = null;
 let answers = [], phase = "loading", timerId = null, submitting = false, deadline = 0;
 let failCount = 0, lockedUntil = 0;
-let lang = getLang(), toggleMounted = false;
 
+// ---------- language ----------
+let lang = getLang();
+const ui = (key, vars) => tr(lang, key, vars);
+function fmtDur(minutes) {
+  const m = Math.max(0, Math.round(Number(minutes) || 0)), h = Math.floor(m / 60), r = m % 60;
+  if (h && r) return h + " " + ui("hr") + " " + r + " " + ui("min");
+  if (h) return h + " " + ui("hr");
+  return r + " " + ui("min");
+}
+const marksTxt = (n) => ui(n === 1 ? "marks1" : "marksN", { n });
+
+let blockedView = null, noticeKey = "", formErr = null, fieldErr = {};
+
+function applyStatic() {
+  document.documentElement.lang = lang === "hi" ? "hi" : "en-IN";
+  document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = ui(el.getAttribute("data-i18n")); });
+  const b = $("langBtn");
+  b.textContent = lang === "hi" ? "English" : "हिन्दी";
+  b.setAttribute("lang", lang === "hi" ? "en" : "hi");
+  document.title = ui("pageTitle") + " - GenAlpha";
+}
+
+function redraw() {
+  if (phase === "blocked") renderBlocked();
+  else if (phase === "verify") renderVerifyTexts();
+  else if (phase === "test" && paper) { const y = window.scrollY; renderQuestions(); window.scrollTo(0, y); }
+  else if (phase === "result") renderResult();
+}
+
+$("langBtn").addEventListener("click", () => {
+  lang = lang === "hi" ? "en" : "hi";
+  setLang(lang);
+  applyStatic();
+  Object.keys(fieldErr).forEach((k) => setErr(k, fieldErr[k]));
+  if (formErr) setFormErr(formErr.key, formErr.vars);
+  redraw();
+});
+
+// ---------- screens ----------
 const norm = (s) => String(s || "").toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, "").replace(/\s+/g, " ").trim();
 
 function show(which) {
@@ -31,27 +71,45 @@ function show(which) {
   window.scrollTo(0, 0);
 }
 
-function block(title, text) {
+function renderBlocked() {
+  if (!blockedView) return;
+  $("blockedTitle").textContent = ui(blockedView.tk, blockedView.vars);
+  $("blockedText").textContent = blockedView.xk ? " " + ui(blockedView.xk, blockedView.vars) : "";
+}
+function block(tk, xk, vars) {
   phase = "blocked";
-  $("blockedTitle").textContent = title; $("blockedText").textContent = text ? " " + text : "";
+  blockedView = { tk, xk, vars };
+  renderBlocked();
   show("blocked");
 }
 
-function setErr(key, msg) {
+// An error is kept as a message key so it can be redrawn when the language changes.
+function setErr(key, msgKey) {
+  fieldErr[key] = msgKey || "";
   const e = $("e_" + key), w = $("w_" + key);
-  if (e) e.textContent = msg || ""; if (w) w.classList.toggle("invalid", !!msg);
+  if (e) e.textContent = msgKey ? ui(msgKey) : "";
+  if (w) w.classList.toggle("invalid", !!msgKey);
+}
+function setFormErr(key, vars) {
+  formErr = key ? { key, vars } : null;
+  $("e_form").textContent = key ? ui(key, vars) : "";
 }
 
 // ---------- verification ----------
+function renderVerifyTexts() {
+  const n = $("vNotice");
+  n.hidden = !noticeKey; n.textContent = noticeKey ? ui(noticeKey) : "";
+  let info = (test.subject || "Test") + " | " + fmtDur(test.durationMinutes) + " | " + marksTxt(test.totalMarks || 0);
+  if (attempt) info += " | " + ui("timerRunning");
+  $("vInfo").textContent = info;
+}
+
 function showVerify(notice) {
   phase = "verify";
   ["name", "father", "dob", "mobile"].forEach((k) => { $("f_" + k).value = ""; setErr(k, ""); });
-  $("e_form").textContent = "";
-  const n = $("vNotice");
-  n.hidden = !notice; n.textContent = notice || "";
-  let info = (test.subject || "Test") + " | " + fmtDuration(test.durationMinutes) + " | " + marksText(test);
-  if (attempt) info += " | Your timer is already running";
-  $("vInfo").textContent = info;
+  setFormErr("");
+  noticeKey = notice || "";
+  renderVerifyTexts();
   $("verifyBtn").disabled = false;
   show("verifyForm");
   $("f_name").focus();
@@ -61,10 +119,10 @@ function checkDetails() {
   const typed = { name: norm($("f_name").value), father: norm($("f_father").value), dob: $("f_dob").value, mobile: normalizeMobile($("f_mobile").value) };
   ["name", "father", "dob", "mobile"].forEach((k) => setErr(k, ""));
   let missing = false;
-  if (!typed.name) { setErr("name", "Enter your name."); missing = true; }
-  if (!typed.father) { setErr("father", "Enter your father's name."); missing = true; }
-  if (!typed.dob) { setErr("dob", "Choose your date of birth."); missing = true; }
-  if (!typed.mobile) { setErr("mobile", "Enter the registered mobile number."); missing = true; }
+  if (!typed.name) { setErr("name", "errName"); missing = true; }
+  if (!typed.father) { setErr("father", "errFather"); missing = true; }
+  if (!typed.dob) { setErr("dob", "errDob"); missing = true; }
+  if (!typed.mobile) { setErr("mobile", "errMobile"); missing = true; }
   if (missing) return null;
   const s = student;
   const ok = typed.name === norm(s.name || s.studentName)
@@ -76,14 +134,14 @@ function checkDetails() {
 
 $("verifyForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  $("e_form").textContent = "";
-  if (Date.now() < lockedUntil) { $("e_form").textContent = "Too many wrong tries. Wait " + Math.ceil((lockedUntil - Date.now()) / 1000) + " seconds and try again."; return; }
+  setFormErr("");
+  if (Date.now() < lockedUntil) { setFormErr("tooMany", { n: Math.ceil((lockedUntil - Date.now()) / 1000) }); return; }
   const result = checkDetails();
   if (result === null) return;
   if (!result) {
     failCount++;
-    if (failCount >= 5) { failCount = 0; lockedUntil = Date.now() + 60000; $("e_form").textContent = "Too many wrong tries. Wait 60 seconds and try again."; }
-    else $("e_form").textContent = "These details do not match our records. Check them and try again.";
+    if (failCount >= 5) { failCount = 0; lockedUntil = Date.now() + 60000; setFormErr("tooMany", { n: 60 }); }
+    else setFormErr("noMatch");
     return;
   }
   failCount = 0;
@@ -113,13 +171,12 @@ async function startTest() {
   try {
     attempt = await ensureAttempt();
     deadline = tsMs(attempt.startedAt) + (test.durationMinutes || 0) * 60000;
-    if (Date.now() >= deadline) { block("Your time for this test has ended.", "The test was not submitted. Please tell your teacher."); return; }
+    if (Date.now() >= deadline) { block("endTitle", "endText"); return; }
     const pSnap = await getDoc(doc(db, "testPapers", testId));
-    if (!pSnap.exists()) { showVerify("The questions could not be opened. Check your phone's date and time, then verify again."); return; }
+    if (!pSnap.exists()) { showVerify("noPaper"); return; }
     paper = pSnap.data();
     await flushViolation();
     answers = new Array((paper.questions || []).length).fill(-1);
-    setupLanguage();
     renderQuestions();
     phase = "test"; submitting = false;
     $("submitBtn").disabled = false;
@@ -128,41 +185,20 @@ async function startTest() {
     startTimer();
   } catch (error) {
     console.error(error);
-    showVerify("Could not start the test. This usually means the start window has closed or the questions are not open yet. Please try again.");
-  }
-}
-
-// The English | Hindi switch appears only when the teacher added a Hindi version.
-function setupLanguage() {
-  const any = paperHasHindi(paper);
-  $("langHost").hidden = !any;
-  if (!any) { lang = "en"; return; }
-  lang = getLang();
-  if (!toggleMounted) {
-    toggleMounted = true;
-    mountLangToggle($("langHost"), lang, (l) => {
-      lang = l;
-      if (phase !== "test" || !paper) return;
-      const y = window.scrollY;
-      renderQuestions();
-      window.scrollTo(0, y);
-    });
-  } else {
-    $("langHost").querySelectorAll("button").forEach((b) => { const on = b.getAttribute("data-lang") === lang; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+    showVerify("startFail");
   }
 }
 
 function renderQuestions() {
-  const mixed = paperHasHindi(paper) && (paper.questions || []).some((q) => !hasHindi(q));
+  const hiCls = lang === "hi" ? ' lang="hi"' : "";
   $("questions").innerHTML = (paper.questions || []).map((q, i) => {
-    const p = pickLang(q, lang), hi = p.lang === "hi" ? ' lang="hi"' : "";
-    return '<div class="tt-q" role="group" aria-labelledby="qh' + i + '" data-i="' + i + '"><h3 id="qh' + i + '">Question ' + (i + 1) + " of " + paper.questions.length + "</h3>" +
-      "<p" + hi + ">" + escapeHtml(p.q) + "</p>" +
-      (mixed && lang === "hi" && p.lang === "en" ? '<p class="tt-note">Hindi is not available for this question.</p>' : "") +
-      p.options.map((o, k) => '<label class="tt-opt"><input type="radio" name="q' + i + '" value="' + k + '"><span' + hi + "><b>" + LETTERS[k] + ".</b> " + escapeHtml(o) + "</span></label>").join("") +
+    const p = pickLang(q, lang), qa = p.lang === "hi" ? ' lang="hi"' : "";   // only older tests that already carry a Hindi version
+    return '<div class="tt-q" role="group" aria-labelledby="qh' + i + '" data-i="' + i + '"><h3 id="qh' + i + '"' + hiCls + ">" + escapeHtml(ui("questionOf", { i: i + 1, n: paper.questions.length })) + "</h3>" +
+      "<p" + qa + ">" + escapeHtml(p.q) + "</p>" +
+      p.options.map((o, k) => '<label class="tt-opt"><input type="radio" name="q' + i + '" value="' + k + '"><span' + qa + "><b>" + LETTERS[k] + ".</b> " + escapeHtml(o) + "</span></label>").join("") +
       "</div>";
   }).join("");
-  // Switching language redraws the questions, so tick the answers the student already gave.
+  // Switching language redraws the page, so tick the answers the student already gave.
   answers.forEach((a, i) => {
     if (a < 0) return;
     const r = $("questions").querySelector('input[name="q' + i + '"][value="' + a + '"]');
@@ -173,7 +209,7 @@ function renderQuestions() {
 
 function updateProgress() {
   const done = answers.filter((a) => a !== -1).length;
-  $("progress").textContent = "Answered " + done + " of " + answers.length;
+  $("progress").textContent = ui("progress", { d: done, n: answers.length });
 }
 
 $("questions").addEventListener("change", (e) => {
@@ -228,7 +264,7 @@ function leave() {
   $("questions").innerHTML = "";
   try { localStorage.setItem(LEFT_KEY, "1"); } catch (e) { /* storage blocked */ }
   disarmLeaveDetection();
-  showVerify("You left the test screen, so your answers and your verification were erased. Verify your details again to continue. Your timer kept running.");
+  showVerify("leftNow");
 }
 
 // ---------- submit and result ----------
@@ -236,7 +272,8 @@ async function submit(auto) {
   if (submitting || phase !== "test") return;
   if (!auto) {
     const left = answers.filter((a) => a === -1).length;
-    if (!confirm("Submit your test now?" + (left ? " You have " + left + " unanswered question" + (left === 1 ? "." : "s.") : "") + " You cannot change answers after this.")) return;
+    const msg = ui("confirmSubmit") + (left ? " " + (left === 1 ? ui("unanswered1") : ui("unansweredN", { n: left })) : "") + " " + ui("noChange");
+    if (!confirm(msg)) return;
   }
   submitting = true; $("submitBtn").disabled = true; clearInterval(timerId);
   try {
@@ -252,34 +289,45 @@ async function submit(auto) {
   } catch (error) {
     console.error(error);
     submitting = false; $("submitBtn").disabled = false;
-    alert(auto ? "Time is up, but your test could not be sent. Check your internet and tap Submit test now." : "Could not submit. Check your internet connection and try again.");
+    alert(ui(auto ? "failAuto" : "fail"));
   }
 }
 
 $("submitBtn").addEventListener("click", () => submit(false));
 
+let resultState = null;
+function renderResult() {
+  const r = resultState;
+  if (!r) return;
+  $("resultNote").textContent = (r.auto ? " " + ui("resAuto") : "") + (r.key ? "" : " " + ui("resWait"));
+  $("resultBody").innerHTML = r.key ? reportHTML({ test, paper: r.paper, key: r.key, submission: r.sub, lang }) : "";
+}
+
 async function showResult(auto) {
   let key = null;
   try { const k = await getDoc(doc(db, "testKeys", aid)); if (k.exists()) key = k.data().answers; } catch (e) { /* key not ready */ }
   const sub = (await getDoc(doc(db, "testSubmissions", aid))).data();
-  $("resultNote").textContent = (auto ? " Time ended, so your test was submitted automatically." : "") + (key ? "" : " Your result will be ready after your teacher checks the test.");
-  $("resultBody").innerHTML = key ? reportHTML({ test, paper: paper || { questions: [] }, key, submission: sub, lang }) : "";
-  if (key && (!paper || !paper.questions)) {
+  let pp = paper;
+  if (key && (!pp || !pp.questions)) {
     // The paper was erased only if the student left; reload it for the report.
-    try { const p = await getDoc(doc(db, "testPapers", testId)); if (p.exists()) $("resultBody").innerHTML = reportHTML({ test, paper: p.data(), key, submission: sub, lang }); } catch (e) { /* ignore */ }
+    try { const p = await getDoc(doc(db, "testPapers", testId)); if (p.exists()) pp = p.data(); } catch (e) { /* ignore */ }
   }
+  resultState = { auto, key, sub, paper: pp || { questions: [] } };
+  phase = "result";
+  renderResult();
   show("resultView");
 }
 
 // ---------- start up ----------
 async function init() {
+  applyStatic();
   if (!roll || !testId) { window.location.replace("student-tests.html"); return; }
   try {
     const sSnap = await getDoc(doc(db, "students", roll));
     if (!sSnap.exists()) { window.location.replace("student-login.html"); return; }
     student = sSnap.data();
     const tSnap = await getDoc(doc(db, "tests", testId));
-    if (!tSnap.exists() || tSnap.data().status !== "published" || !testIsForStudent(tSnap.data(), student)) { block("This test is not available.", "Go back and choose a test from your list."); return; }
+    if (!tSnap.exists() || tSnap.data().status !== "published" || !testIsForStudent(tSnap.data(), student)) { block("naTitle", "naText"); return; }
     test = tSnap.data();
 
     const done = await getDoc(doc(db, "testSubmissions", aid));
@@ -290,8 +338,8 @@ async function init() {
       const update = () => {
         const left = start - Date.now();
         if (left <= 0) { clearInterval(wait); init(); return; }
-        $("blockedTitle").textContent = "This test has not started yet.";
-        $("blockedText").textContent = " It starts at " + fmtDateTime(start) + ". Starts in " + fmtCountdown(left) + ".";
+        blockedView = { tk: "nsTitle", xk: "nsText", vars: { t: fmtDateTime(start), c: fmtCountdown(left) } };
+        renderBlocked();
       };
       phase = "blocked"; show("blocked");
       const wait = setInterval(update, 1000); update();
@@ -301,15 +349,15 @@ async function init() {
     const aSnap = await getDoc(doc(db, "testAttempts", aid));
     if (aSnap.exists()) {
       attempt = aSnap.data();
-      if (Date.now() > tsMs(attempt.startedAt) + (test.durationMinutes || 0) * 60000 + GRACE_MS) { block("Your time for this test has ended.", "The test was not submitted. Please tell your teacher."); return; }
+      if (Date.now() > tsMs(attempt.startedAt) + (test.durationMinutes || 0) * 60000 + GRACE_MS) { block("endTitle", "endText"); return; }
     } else if (openState(test, Date.now()) === "closed") {
-      block("This test is closed.", "The last time to start was " + fmtDateTime(tsMs(test.endAt)) + ".");
+      block("closedTitle", "closedText", { t: fmtDateTime(tsMs(test.endAt)) });
       return;
     }
-    showVerify(localStorage.getItem(LEFT_KEY) ? "You left the test screen earlier, so your answers were erased. Verify your details again to continue." : "");
+    showVerify(localStorage.getItem(LEFT_KEY) ? "leftEarlier" : "");
   } catch (error) {
     console.error(error);
-    block("Could not load the test.", "Please go back and try again.");
+    block("loadTitle", "loadText");
   }
 }
 

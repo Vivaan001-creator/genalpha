@@ -4,7 +4,7 @@ import { db } from "./Firebase.js";
 import { collection, doc, getDoc, getDocs, setDoc, query, where, serverTimestamp, Timestamp }
   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { escapeHtml, tsMs, LETTERS, attemptId, fmtDuration, fmtDateTime, sameSection } from "./tests-common.js";
-import { readQuestions as parsePasted, parseQuestions, SAMPLE_TEXT, SAMPLE_CSV, buildAiPrompt, buildHindiPrompt } from "./question-import.js";
+import { readQuestions as parsePasted, SAMPLE_TEXT, SAMPLE_CSV, buildAiPrompt } from "./question-import.js";
 
 const $ = (id) => document.getElementById(id);
 const teacherId = localStorage.getItem("teacherDocId");
@@ -36,17 +36,9 @@ function addQuestion(data) {
     opts += '<div class="te-opt"><input type="radio" name="correct_' + k + '" value="' + i + '" aria-label="Option ' + LETTERS[i] + ' is the correct answer"' + (data && data.correct === i ? " checked" : "") + ">" +
       '<label class="letter" for="o_' + k + "_" + i + '">' + LETTERS[i] + '</label><input type="text" id="o_' + k + "_" + i + '" maxlength="200" placeholder="Option ' + LETTERS[i] + '" value="' + escapeHtml(data && data.options && data.options[i] || "") + '"></div>';
   }
-  const hi = data && data.hi;
-  let hiOpts = "";
-  for (let i = 0; i < 4; i++) {
-    hiOpts += '<div class="te-opt"><span class="letter" aria-hidden="true">' + LETTERS[i] + '</span><input type="text" id="h_' + k + "_" + i + '" lang="hi" maxlength="200" placeholder="\u0935\u093f\u0915\u0932\u094d\u092a ' + LETTERS[i] + '" aria-label="Hindi option ' + LETTERS[i] + '" value="' + escapeHtml(hi && hi.options && hi.options[i] || "") + '"></div>';
-  }
   wrap.innerHTML = '<div class="te-q-head"><h3>Question <span class="qn"></span></h3><button type="button" class="ep-btn te-mini" data-remove>Remove</button></div>' +
     '<div class="ep-field"><label for="q_' + k + '">Question</label><textarea id="q_' + k + '" maxlength="500">' + escapeHtml(data && data.q || "") + "</textarea></div>" +
     '<fieldset style="border:0;padding:0;margin:0"><legend style="font-weight:600;font-size:14px;margin:0 0 6px">Options. Tap the circle next to the correct one.</legend>' + opts + "</fieldset>" +
-    '<details class="te-hi"' + (hi && hi.q ? " open" : "") + '><summary>Hindi version <small>(optional)</small></summary>' +
-    '<div class="ep-field"><label for="hq_' + k + '">Question in Hindi</label><textarea id="hq_' + k + '" lang="hi" maxlength="500">' + escapeHtml(hi && hi.q || "") + "</textarea></div>" +
-    '<p class="ep-help" style="margin:0 0 8px">Write each option in the same position as the English one. The correct answer is the same.</p>' + hiOpts + "</details>" +
     '<p class="ep-error" role="alert" data-err></p>';
   $("questions").appendChild(wrap);
   renumber();
@@ -73,13 +65,7 @@ function readQuestions() {
     const correctRaw = checked ? parseInt(checked.value, 10) : -1;
     const options = [], map = {};
     raw.forEach((text, i) => { if (text) { map[i] = options.length; options.push(text); } });
-    const hiQ = String($("hq_" + k).value || "").trim();
-    const hiRaw = [0, 1, 2, 3].map((i) => String($("h_" + k + "_" + i).value || "").trim());
-    const hiOptions = [];
-    raw.forEach((text, i) => { if (text) hiOptions.push(hiRaw[i]); });   // same positions as the English options that are kept
-    const hiAny = !!hiQ || hiRaw.some(Boolean);
-    const hiOrphan = hiRaw.findIndex((t, i) => t && !raw[i]);
-    return { el, q, options, correct: correctRaw >= 0 && map[correctRaw] !== undefined ? map[correctRaw] : -1, correctRaw, raw, hiQ, hiOptions, hiAny, hiOrphan };
+    return { el, q, options, correct: correctRaw >= 0 && map[correctRaw] !== undefined ? map[correctRaw] : -1, correctRaw, raw };
   });
 }
 
@@ -117,9 +103,6 @@ function validate(forPublish) {
     else if (x.options.length < 2) msg = "Enter at least two options.";
     else if (new Set(x.options.map((o) => o.toLowerCase())).size !== x.options.length) msg = "Two options are the same.";
     else if (x.correctRaw < 0 || x.correct < 0) msg = "Select the correct answer (and make sure that option has text).";
-    else if (x.hiAny && x.hiQ.length < 3) msg = "Hindi: write the question, or clear the Hindi boxes.";
-    else if (x.hiAny && x.hiOrphan >= 0) msg = "Hindi option " + LETTERS[x.hiOrphan] + " has no English option in the same position.";
-    else if (x.hiAny && x.hiOptions.some((o) => !o)) msg = "Hindi: every option needs Hindi text, or clear the Hindi boxes.";
     err.textContent = msg;
     if (msg && !first) first = x.el;
   });
@@ -131,8 +114,6 @@ function validate(forPublish) {
 async function save(publish) {
   const v = validate(publish);
   if (!v) return;
-  const noHindi = v.qs.filter((x) => !x.hiAny).length;
-  if (publish && noHindi && noHindi < v.qs.length && !confirm(noHindi + (noHindi === 1 ? " question has" : " questions have") + " no Hindi version. Students who choose Hindi will see " + (noHindi === 1 ? "it" : "them") + " in English. Publish anyway?")) return;
   const btns = [$("saveDraft"), $("publishBtn")];
   btns.forEach((b) => { b.disabled = true; });
   const labelPub = $("publishBtn").textContent;
@@ -144,7 +125,6 @@ async function save(publish) {
 
     const meta = {
       subject: val("f_subject"), title: val("f_title"), class: val("f_class"), section: val("f_section"),
-      bilingual: v.qs.some((x) => x.hiAny),
       durationMinutes: v.duration, startAt: Timestamp.fromMillis(v.start), endAt: Timestamp.fromMillis(v.end),
       questionCount: v.qs.length, marksPerQuestion: v.marks, totalMarks: v.qs.length * v.marks,
       status: publish ? "published" : "draft",
@@ -154,11 +134,7 @@ async function save(publish) {
     if (!existing.exists()) meta.createdAt = serverTimestamp();
     if (publish) meta.publishedAt = serverTimestamp();
     await setDoc(doc(db, "tests", testId), meta, { merge: true });
-    await setDoc(doc(db, "testPapers", testId), { questions: v.qs.map((x) => {
-      const o = { q: x.q, options: x.options };
-      if (x.hiAny) o.hi = { q: x.hiQ, options: x.hiOptions };
-      return o;
-    }) });
+    await setDoc(doc(db, "testPapers", testId), { questions: v.qs.map((x) => ({ q: x.q, options: x.options })) });
     const answers = v.qs.map((x) => x.correct);
     await setDoc(doc(db, "testKeys", testId), { testId, answers });
 
@@ -240,9 +216,8 @@ async function init() {
       host.innerHTML = '<h2 class="t-head">' + escapeHtml(existing.subject) + ' &middot; Class ' + escapeHtml(existing.class) + (existing.section ? " &middot; Section " + escapeHtml(existing.section) : "") + "</h2>" +
         '<p class="ep-hint">' + escapeHtml(fmtDuration(existing.durationMinutes)) + " | " + existing.totalMarks + " marks | Starts " + escapeHtml(fmtDateTime(tsMs(existing.startAt))) + "</p>" +
         (paper.questions || []).map((q, i) => '<article class="t-q"><h3>Question ' + (i + 1) + '</h3><p class="t-qtext">' + escapeHtml(q.q) + "</p>" +
-          (q.hi && q.hi.q ? '<p class="t-qtext" lang="hi">' + escapeHtml(q.hi.q) + "</p>" : "") + '<ul class="t-options">' +
+          '<ul class="t-options">' +
           q.options.map((o, k) => '<li class="' + (k === key[i] ? "is-right" : "") + '"><b>' + LETTERS[k] + ".</b> <span>" + escapeHtml(o) + "</span>" +
-            (q.hi && q.hi.options && q.hi.options[k] ? ' <span class="hi-alt" lang="hi">' + escapeHtml(q.hi.options[k]) + "</span>" : "") +
             (k === key[i] ? '<em class="tag ok">Correct answer</em>' : "") + "</li>").join("") + "</ul></article>").join("");
       $("main").appendChild(host);
       return;
@@ -255,7 +230,7 @@ async function init() {
       if (existing.startAt) $("f_start").value = toLocalInput(tsMs(existing.startAt));
       if (existing.endAt) $("f_end").value = toLocalInput(tsMs(existing.endAt));
       $("f_marks").value = existing.marksPerQuestion || 1;
-      (paper.questions || []).forEach((q, i) => addQuestion({ q: q.q, options: q.options, hi: q.hi, correct: key && key[i] !== undefined ? key[i] : -1 }));
+      (paper.questions || []).forEach((q, i) => addQuestion({ q: q.q, options: q.options, correct: key && key[i] !== undefined ? key[i] : -1 }));
     } else {
       const now = new Date(Date.now() + 60 * 60000); now.setMinutes(0, 0, 0);
       $("f_start").value = toLocalInput(now.getTime());
@@ -314,7 +289,7 @@ function showPreview(result) {
     const ok = !q.warnings.length;
     const text = q.q.length > 90 ? q.q.slice(0, 90) + "..." : q.q;
     return '<li class="' + (ok ? "ok" : "warn") + '"><b>' + (i + 1) + ".</b> <span>" + escapeHtml(text) + "</span><em>" +
-      (ok ? q.options.length + " options. Answer " + LETTERS[q.correct] + (q.hi ? ". With Hindi" : "") : escapeHtml(q.warnings[0])) + "</em></li>";
+      (ok ? q.options.length + " options. Answer " + LETTERS[q.correct] : escapeHtml(q.warnings[0])) + "</em></li>";
   }).join("");
   $("qiPreview").hidden = false;
   $("qiPreview").scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -367,8 +342,7 @@ $("qiAdd").addEventListener("click", () => {
   const take = pending.slice(0, Math.max(0, room));
   let first = null;
   take.forEach((q) => {
-    const block = addQuestion({ q: q.q.slice(0, 500), options: q.options.map((o) => o.slice(0, 200)), correct: q.correct,
-      hi: q.hi ? { q: q.hi.q.slice(0, 500), options: q.hi.options.map((o) => o.slice(0, 200)) } : null });
+    const block = addQuestion({ q: q.q.slice(0, 500), options: q.options.map((o) => o.slice(0, 200)), correct: q.correct });
     if (!first) first = block;
     if (q.warnings.length) block.querySelector("[data-err]").textContent = q.warnings[0];
   });
@@ -378,43 +352,6 @@ $("qiAdd").addEventListener("click", () => {
     (take.length < pending.length ? " The test can have at most 100 questions, so the rest were skipped." : "");
   pending = []; $("qiPreview").hidden = true; $("qiText").value = "";
   if (first) first.scrollIntoView({ block: "start", behavior: "smooth" });
-});
-
-// ---------- Hindi version of the questions already in the editor ----------
-$("qiBtnHi").addEventListener("click", () => toggle($("qiBtnHi")));
-function englishQuestions() {
-  return readQuestions().filter((x) => x.q && x.options.length >= 2).map((x) => ({ q: x.q, options: x.options, correct: x.correct }));
-}
-$("hiCopy").addEventListener("click", async () => {
-  const qs = englishQuestions();
-  if (!qs.length) { $("hiDone").textContent = "Add your English questions first. Then copy the request."; return; }
-  const text = buildHindiPrompt(qs);
-  try { await navigator.clipboard.writeText(text); $("hiDone").textContent = "Copied. Paste it into ChatGPT, Claude or Gemini, then paste its answer in the box below."; }
-  catch (e) { $("hiText").value = text; $("hiText").select(); $("hiDone").textContent = "The request is in the box below. Copy it, and paste the Hindi answer here after."; }
-});
-$("hiApply").addEventListener("click", () => {
-  const text = $("hiText").value;
-  if (!text.trim()) { $("hiDone").textContent = "Paste the Hindi questions in the box first."; $("hiText").focus(); return; }
-  const found = parseQuestions(text).questions;
-  const blocks = [...document.querySelectorAll("#questions .te-q")];
-  if (!found.length) { $("hiDone").textContent = "No questions were found. Keep the same layout: 1. question, then A) B) C) D) on separate lines."; return; }
-  let applied = 0; const bad = [];
-  blocks.forEach((el, i) => {
-    const h = found[i];
-    if (!h) return;
-    const k = el.getAttribute("data-q");
-    const eng = [0, 1, 2, 3].map((j) => String($("o_" + k + "_" + j).value || "").trim());
-    if (h.options.length !== eng.filter(Boolean).length) { bad.push(i + 1); return; }
-    $("hq_" + k).value = h.q.slice(0, 500);
-    let n = 0;
-    eng.forEach((t, j) => { $("h_" + k + "_" + j).value = t ? h.options[n++].slice(0, 200) : ""; });
-    el.querySelector("details.te-hi").open = true;
-    applied++;
-  });
-  $("hiDone").textContent = applied + " of " + blocks.length + (blocks.length === 1 ? " question" : " questions") + " now " + (applied === 1 ? "has" : "have") + " Hindi." +
-    (found.length !== blocks.length ? " You pasted " + found.length + " but the test has " + blocks.length + ". Check the order." : "") +
-    (bad.length ? " Question " + bad.join(", ") + " could not be matched because the number of options is different." : " Read them once, then publish.");
-  if (applied) $("hiText").value = "";
 });
 
 $("saveDraft").addEventListener("click", () => save(false));
