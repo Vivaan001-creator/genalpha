@@ -8,7 +8,8 @@
 import { db } from "./Firebase.js";
 import { doc, getDoc, setDoc, updateDoc, increment, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { escapeHtml, tsMs, fmtDateTime, fmtDuration, fmtCountdown, marksText, openState, LETTERS, attemptId, reportHTML } from "./tests-common.js";
+import { escapeHtml, tsMs, fmtDateTime, fmtDuration, fmtCountdown, marksText, openState, LETTERS, attemptId, reportHTML,
+  testIsForStudent, getLang, pickLang, hasHindi, paperHasHindi, mountLangToggle } from "./tests-common.js";
 import { normalizeMobile, toISODateInput } from "./profile-utils.js";
 
 const $ = (id) => document.getElementById(id);
@@ -21,6 +22,7 @@ const GRACE_MS = 2 * 60000;
 let student = null, test = null, attempt = null, paper = null;
 let answers = [], phase = "loading", timerId = null, submitting = false, deadline = 0;
 let failCount = 0, lockedUntil = 0;
+let lang = getLang(), toggleMounted = false;
 
 const norm = (s) => String(s || "").toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, "").replace(/\s+/g, " ").trim();
 
@@ -117,6 +119,7 @@ async function startTest() {
     paper = pSnap.data();
     await flushViolation();
     answers = new Array((paper.questions || []).length).fill(-1);
+    setupLanguage();
     renderQuestions();
     phase = "test"; submitting = false;
     $("submitBtn").disabled = false;
@@ -129,12 +132,42 @@ async function startTest() {
   }
 }
 
+// The English | Hindi switch appears only when the teacher added a Hindi version.
+function setupLanguage() {
+  const any = paperHasHindi(paper);
+  $("langHost").hidden = !any;
+  if (!any) { lang = "en"; return; }
+  lang = getLang();
+  if (!toggleMounted) {
+    toggleMounted = true;
+    mountLangToggle($("langHost"), lang, (l) => {
+      lang = l;
+      if (phase !== "test" || !paper) return;
+      const y = window.scrollY;
+      renderQuestions();
+      window.scrollTo(0, y);
+    });
+  } else {
+    $("langHost").querySelectorAll("button").forEach((b) => { const on = b.getAttribute("data-lang") === lang; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+  }
+}
+
 function renderQuestions() {
-  $("questions").innerHTML = (paper.questions || []).map((q, i) =>
-    '<div class="tt-q" role="group" aria-labelledby="qh' + i + '" data-i="' + i + '"><h3 id="qh' + i + '">Question ' + (i + 1) + " of " + paper.questions.length + "</h3>" +
-    "<p>" + escapeHtml(q.q) + "</p>" +
-    (q.options || []).map((o, k) => '<label class="tt-opt"><input type="radio" name="q' + i + '" value="' + k + '"><span><b>' + LETTERS[k] + ".</b> " + escapeHtml(o) + "</span></label>").join("") +
-    "</div>").join("");
+  const mixed = paperHasHindi(paper) && (paper.questions || []).some((q) => !hasHindi(q));
+  $("questions").innerHTML = (paper.questions || []).map((q, i) => {
+    const p = pickLang(q, lang), hi = p.lang === "hi" ? ' lang="hi"' : "";
+    return '<div class="tt-q" role="group" aria-labelledby="qh' + i + '" data-i="' + i + '"><h3 id="qh' + i + '">Question ' + (i + 1) + " of " + paper.questions.length + "</h3>" +
+      "<p" + hi + ">" + escapeHtml(p.q) + "</p>" +
+      (mixed && lang === "hi" && p.lang === "en" ? '<p class="tt-note">Hindi is not available for this question.</p>' : "") +
+      p.options.map((o, k) => '<label class="tt-opt"><input type="radio" name="q' + i + '" value="' + k + '"><span' + hi + "><b>" + LETTERS[k] + ".</b> " + escapeHtml(o) + "</span></label>").join("") +
+      "</div>";
+  }).join("");
+  // Switching language redraws the questions, so tick the answers the student already gave.
+  answers.forEach((a, i) => {
+    if (a < 0) return;
+    const r = $("questions").querySelector('input[name="q' + i + '"][value="' + a + '"]');
+    if (r) r.checked = true;
+  });
   updateProgress();
 }
 
@@ -230,10 +263,10 @@ async function showResult(auto) {
   try { const k = await getDoc(doc(db, "testKeys", aid)); if (k.exists()) key = k.data().answers; } catch (e) { /* key not ready */ }
   const sub = (await getDoc(doc(db, "testSubmissions", aid))).data();
   $("resultNote").textContent = (auto ? " Time ended, so your test was submitted automatically." : "") + (key ? "" : " Your result will be ready after your teacher checks the test.");
-  $("resultBody").innerHTML = key ? reportHTML({ test, paper: paper || { questions: [] }, key, submission: sub }) : "";
+  $("resultBody").innerHTML = key ? reportHTML({ test, paper: paper || { questions: [] }, key, submission: sub, lang }) : "";
   if (key && (!paper || !paper.questions)) {
     // The paper was erased only if the student left; reload it for the report.
-    try { const p = await getDoc(doc(db, "testPapers", testId)); if (p.exists()) $("resultBody").innerHTML = reportHTML({ test, paper: p.data(), key, submission: sub }); } catch (e) { /* ignore */ }
+    try { const p = await getDoc(doc(db, "testPapers", testId)); if (p.exists()) $("resultBody").innerHTML = reportHTML({ test, paper: p.data(), key, submission: sub, lang }); } catch (e) { /* ignore */ }
   }
   show("resultView");
 }
@@ -246,7 +279,7 @@ async function init() {
     if (!sSnap.exists()) { window.location.replace("student-login.html"); return; }
     student = sSnap.data();
     const tSnap = await getDoc(doc(db, "tests", testId));
-    if (!tSnap.exists() || tSnap.data().status !== "published" || tSnap.data().class !== student.class) { block("This test is not available.", "Go back and choose a test from your list."); return; }
+    if (!tSnap.exists() || tSnap.data().status !== "published" || !testIsForStudent(tSnap.data(), student)) { block("This test is not available.", "Go back and choose a test from your list."); return; }
     test = tSnap.data();
 
     const done = await getDoc(doc(db, "testSubmissions", aid));
