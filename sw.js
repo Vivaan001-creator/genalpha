@@ -12,7 +12,7 @@ const CDN_OK = ["www.gstatic.com", "cdnjs.cloudflare.com", "fonts.googleapis.com
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll([
-    "login.html", "site.css", "site.js", "appearance.js", "Firebase.js", "logo.png"
+    "login.html", "premium.css", "protect.css", "protect.js", "site.css", "site.js", "appearance.js", "Firebase.js", "logo.png"
   ]).catch(() => {})));
 });
 self.addEventListener("activate", (event) => event.waitUntil(
