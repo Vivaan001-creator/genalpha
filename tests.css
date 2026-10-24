@@ -119,25 +119,3 @@ html[data-theme="dark"] .t-chip{ background:#262d52; color:#b7bcdc; } html[data-
 .qi-list li span{ flex:1 1 160px; min-width:0; overflow-wrap:anywhere; }
 .qi-list li em{ flex-basis:100%; font-style:normal; font-size:12.5px; color:var(--ep-ok); font-weight:600; }
 .qi-list li.warn em{ color:var(--ep-err); }
-
-/* ---- English / Hindi ---- */
-[lang="hi"]{ font-family:"Noto Sans Devanagari","Nirmala UI","Mangal",Inter,system-ui,sans-serif; line-height:1.65; }
-.lang-sw{ display:inline-flex; border:1.5px solid currentColor; border-radius:999px; overflow:hidden; flex-shrink:0; }
-.lang-sw button{ min-height:36px; min-width:44px; padding:4px 12px; border:0; background:transparent; color:inherit; font:600 13px/1.2 Inter, sans-serif; cursor:pointer; }
-.lang-sw button.on{ background:#ffb347; color:#241f14; }
-.lang-sw button:focus-visible{ outline:3px solid var(--ep-focus); outline-offset:-3px; }
-.lang-row{ display:flex; justify-content:flex-end; margin:0 0 12px; color:var(--ep-ink); }
-.tt-note{ margin:-4px 0 8px; font-size:12.5px; color:var(--ep-soft); }
-.te-hi{ margin:12px 0 4px; border-top:1px dashed var(--ep-line); padding-top:4px; }
-.te-hi summary{ min-height:44px; display:flex; align-items:center; gap:6px; font-weight:600; font-size:14px; cursor:pointer; }
-.te-hi summary small{ font-weight:400; color:var(--ep-soft); }
-.te-hi .te-opt .letter{ font-weight:700; width:22px; flex-shrink:0; margin-left:30px; }
-.te-hi textarea, .te-hi .te-opt input[type=text]{ font-size:16px; }
-.hi-alt{ display:block; font-size:13px; color:var(--ep-soft); }
-
-/* ---- language button in the header, and Hindi page font ---- */
-.lang-btn{ flex-shrink:0; min-height:40px; min-width:64px; padding:6px 14px; border:1.5px solid currentColor; border-radius:999px; background:transparent; color:inherit; font:600 14px/1.2 Inter, sans-serif; cursor:pointer; }
-.lang-btn:focus-visible{ outline:3px solid var(--ep-focus); outline-offset:2px; }
-html[lang="hi"] body, html[lang="hi"] h1, html[lang="hi"] h2, html[lang="hi"] h3, html[lang="hi"] button, html[lang="hi"] input, html[lang="hi"] textarea{
-  font-family:Inter,"Noto Sans Devanagari","Nirmala UI","Mangal",system-ui,sans-serif; }
-html[lang="hi"] body{ line-height:1.65; }

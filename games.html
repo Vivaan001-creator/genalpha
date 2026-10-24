@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self' mailto:">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Learning Games for Class 1 to 6 - GenAlpha</title>
+<meta name="description" content="Free learning games for Class 1 to 6: maths, words, tables, science, GK, puzzles and more. Win stars and badges and climb the leaderboard.">
+<meta name="theme-color" content="#0f1a33">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="games.css">
+<script src="appearance.js"></script>
+</head>
+<body class="g">
+<a class="g-skip" href="#app">Skip to the games</a>
+<header class="g-header">
+  <a class="g-brand" href="login.html" aria-label="GenAlpha, back to login">
+    <img src="favicon-32.png" width="32" height="32" alt=""><span>GenAlpha Games</span>
+  </a>
+  <div id="playerChip"></div>
+  <button type="button" class="g-soundbtn" id="soundBtn" data-act="sound" aria-pressed="true">Sound on</button>
+  <div id="appearanceMount"></div>
+</header>
+<main id="app" class="g-main" aria-live="polite"><p class="g-sub">Loading the games...</p></main>
+<noscript><p class="g-main">These games need JavaScript. Please turn it on in your browser.</p></noscript>
+<footer class="g-footer">
+  <nav aria-label="Legal"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="cookies.html">Cookies</a></nav>
+  <p>Use a nickname, not your real name. Ask a parent or teacher if you are not sure.</p>
+</footer>
+<script type="module" src="games-ui.js"></script>
+</body>
+</html>

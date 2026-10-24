@@ -185,33 +185,19 @@ export function parseTable(raw) {
   const head = rows[0].map((c) => String(c).trim().toLowerCase());
   const isQ = (h) => /^q$|question|sawal|prashn/.test(h);
   const hasHeader = head.some(isQ) || (head.some((h) => /option|choice/.test(h)) && head.some((h) => /answer|key|correct/.test(h)));
-  // Columns whose heading says Hindi (for example "Question (Hindi)", "Option A Hindi") hold the Hindi version.
-  const isHiHead = (h) => /hindi|\u0939\u093f\u0928\u094d\u0926\u0940|\u0939\u093f\u0902\u0926\u0940|(?:^|[\s_\-\(\[])hi(?:$|[\s_\-\)\]])/.test(h);
-  const headEn = head.map((h) => (isHiHead(h) ? "" : h));
-  const headHi = head.map((h) => (isHiHead(h) ? h : ""));
-  let qi = 0, oi = [1, 2, 3, 4], ai = 5, start = 0, hqi = -1, hoi = [-1, -1, -1, -1];
+  let qi = 0, oi = [1, 2, 3, 4], ai = 5, start = 0;
   if (hasHeader) {
     start = 1;
-    qi = headEn.findIndex(isQ);
-    hqi = headHi.findIndex(isQ);
-    hoi = [0, 1, 2, 3].map((n) => headHi.findIndex((h) => new RegExp("(?:option|choice|opt|vikalp|\\u0935\\u093f\\u0915\\u0932\\u094d\\u092a)\\s*[\\(_\\- ]*(?:" + LETTERS[n].toLowerCase() + "|" + (n + 1) + ")(?![a-z0-9])").test(h)));
-    oi = [0, 1, 2, 3].map((n) => headEn.findIndex((h) => new RegExp("^(?:option|choice|opt)?\\s*[\\(_\\- ]*(?:" + LETTERS[n].toLowerCase() + "|" + (n + 1) + ")[\\)]?$").test(h) || new RegExp("(?:option|choice)\\s*[\\(_\\- ]*(?:" + LETTERS[n].toLowerCase() + "|" + (n + 1) + ")").test(h)));
-    ai = headEn.findIndex((h) => /answer|correct|^ans|key|sahi/.test(h));
+    qi = head.findIndex(isQ);
+    oi = [0, 1, 2, 3].map((n) => head.findIndex((h) => new RegExp("^(?:option|choice|opt)?\\s*[\\(_\\- ]*(?:" + LETTERS[n].toLowerCase() + "|" + (n + 1) + ")[\\)]?$").test(h) || new RegExp("(?:option|choice)\\s*[\\(_\\- ]*(?:" + LETTERS[n].toLowerCase() + "|" + (n + 1) + ")").test(h)));
+    ai = head.findIndex((h) => /answer|correct|^ans|key|sahi/.test(h));
     if (qi < 0 || oi.some((x) => x < 0)) return { questions: [], warnings: ["The first row should have the columns: Question, Option A, Option B, Option C, Option D, Correct answer."] };
   }
   const questions = [];
   rows.slice(start).forEach((r, n) => {
     const q = String(r[qi] || "").trim();
-    const rawOpts = oi.map((x) => String(r[x] === undefined ? "" : r[x]).trim());
-    const options = rawOpts.filter(Boolean);
+    const options = oi.map((x) => String(r[x] === undefined ? "" : r[x]).trim()).filter(Boolean);
     const item = { q, options, correct: -1, number: n + 1, warnings: [] };
-    if (hqi >= 0) {
-      const hq = String(r[hqi] === undefined ? "" : r[hqi]).trim();
-      const hRaw = hoi.map((x) => (x >= 0 && r[x] !== undefined ? String(r[x]).trim() : ""));
-      const hOpts = hRaw.filter((_, k) => rawOpts[k]);
-      if (hq && hOpts.length === options.length && hOpts.every(Boolean)) item.hi = { q: hq, options: hOpts };
-      else if (hq || hRaw.some(Boolean)) item.warnings.push("The Hindi columns are incomplete, so this question will be English only.");
-    }
     const a = String(ai >= 0 && r[ai] !== undefined ? r[ai] : "").trim();
     if (a) item.correct = resolveAnswer(a, options, options.map((_, k) => LETTERS[k]));
     if (item.options.length < 2) item.warnings.push("This question needs at least 2 options.");
@@ -275,19 +261,4 @@ export function buildAiPrompt({ subject, cls, topic, count }) {
     "Format (leave one blank line between questions):\n\n" +
     "1. Question text here?\nA) First option\nB) Second option\nC) Third option\nD) Fourth option\nAnswer: B\n\n" +
     "2. Next question?\nA) ...\nB) ...\nC) ...\nD) ...\nAnswer: C";
-}
-
-// A request the teacher can paste into an AI chat to get the Hindi version of the questions already in the editor.
-// questions = [{ q, options: [..], correct: index or -1 }]
-export function buildHindiPrompt(questions) {
-  const body = questions.map((x, i) =>
-    (i + 1) + ". " + x.q + "\n" + x.options.map((o, k) => LETTERS[k] + ") " + o).join("\n") + (x.correct >= 0 ? "\nAnswer: " + LETTERS[x.correct] : "")
-  ).join("\n\n");
-  return "Translate these multiple choice questions from English into simple Hindi (Devanagari script) for school students.\n\n" +
-    "Rules:\n" +
-    "- Keep the question numbers, the option labels A), B), C), D) and the \"Answer:\" lines exactly as they are (English letters and digits).\n" +
-    "- Keep the options in the same order. Do not change which option is correct.\n" +
-    "- Keep numbers, formulas, chemical symbols and units as they are.\n" +
-    "- Reply with ONLY the translated questions. No introduction, no explanations.\n\n" +
-    "Questions:\n\n" + body;
 }

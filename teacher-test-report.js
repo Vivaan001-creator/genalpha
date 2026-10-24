@@ -2,7 +2,7 @@
 import { db } from "./Firebase.js";
 import { collection, doc, getDoc, getDocs, setDoc, deleteDoc, query, where }
   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { escapeHtml, tsMs, fmtDuration, fmtDateTime, fmtDay, gradeAnswers, reportHTML, attemptId, sameSection, classLabel } from "./tests-common.js";
+import { escapeHtml, tsMs, fmtDuration, fmtDateTime, fmtDay, gradeAnswers, reportHTML, attemptId } from "./tests-common.js";
 
 const $ = (id) => document.getElementById(id);
 const teacherId = localStorage.getItem("teacherDocId");
@@ -26,7 +26,7 @@ async function load() {
 
     const subs = (await getDocs(query(collection(db, "testSubmissions"), where("testId", "==", testId)))).docs.map((d) => d.data());
     const atts = (await getDocs(query(collection(db, "testAttempts"), where("testId", "==", testId)))).docs.map((d) => d.data());
-    const students = (await getDocs(query(collection(db, "students"), where("class", "==", test.class)))).docs.map((d) => ({ ...d.data(), roll: d.id })).filter((s) => !test.section || sameSection(s.section, test.section));
+    const students = (await getDocs(query(collection(db, "students"), where("class", "==", test.class)))).docs.map((d) => ({ ...d.data(), roll: d.id }));
 
     // A student added after publishing has no key copy yet. Create it so they can see their result.
     for (const s of subs) {
@@ -43,7 +43,7 @@ async function load() {
     const total = test.totalMarks || 0;
     const avg = rows.length ? rows.reduce((a, r) => a + r.g.score, 0) / rows.length : 0;
     $("summary").innerHTML = '<h2 style="margin:0 0 4px">' + escapeHtml(test.subject) + (test.title ? " &middot; " + escapeHtml(test.title) : "") + "</h2>" +
-      '<p class="ep-hint">' + escapeHtml(classLabel(test)) + " &middot; " + escapeHtml(fmtDay(tsMs(test.startAt))) + " &middot; " + escapeHtml(fmtDuration(test.durationMinutes)) + " &middot; " + total + " marks &middot; " + (test.questionCount || 0) + " questions</p>" +
+      '<p class="ep-hint">Class ' + escapeHtml(test.class) + " &middot; " + escapeHtml(fmtDay(tsMs(test.startAt))) + " &middot; " + escapeHtml(fmtDuration(test.durationMinutes)) + " &middot; " + total + " marks &middot; " + (test.questionCount || 0) + " questions</p>" +
       '<div class="ep-readonly-row"><span>Submitted</span><span>' + rows.length + " of " + students.length + " students</span></div>" +
       (rows.length ? '<div class="ep-readonly-row"><span>Average</span><span>' + avg.toFixed(1) + " / " + total + '</span></div><div class="ep-readonly-row"><span>Highest</span><span>' + rows[0].g.score + " / " + total + '</span></div><div class="ep-readonly-row"><span>Lowest</span><span>' + rows[rows.length - 1].g.score + " / " + total + "</span></div>" : "");
 

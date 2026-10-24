@@ -168,7 +168,7 @@ service cloud.firestore {
     // ---------- Online tests ----------
     // Questions and answers live in separate documents so a student cannot read
     // the answers (or the questions) before they are allowed to.
-    //   tests/{id}                  details students see: subject, class, section, time, marks
+    //   tests/{id}                  details students see: subject, time, marks
     //   testPapers/{id}             the questions (no answers). Readable only after the start time.
     //   testKeys/{id}               the answer key. Staff only.
     //   testKeys/{id}_{roll}        a copy of the key for one student. Readable only after that
@@ -220,12 +220,7 @@ service cloud.firestore {
           && request.resource.data.violations == 0
           && testData(request.resource.data.testId).status == 'published'
           && request.time >= testData(request.resource.data.testId).startAt
-          && request.time <= testData(request.resource.data.testId).endAt
-          // A test made for one section can be started only by a student of that section.
-          // (Older tests have no section and stay open to the whole class.)
-          && (testData(request.resource.data.testId).get('section', '') == ''
-              || get(/databases/$(database)/documents/students/$(request.resource.data.roll)).data.get('section', '').trim().upper()
-                 == testData(request.resource.data.testId).section.trim().upper());
+          && request.time <= testData(request.resource.data.testId).endAt;
       // Counts each time the student left the test screen (one step at a time).
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['violations'])
           && request.resource.data.violations == resource.data.violations + 1
