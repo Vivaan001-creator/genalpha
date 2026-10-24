@@ -117,7 +117,7 @@ Fixed:
 - **Logout on the admin More page did nothing.** The page called `adminLogout()` but never loaded it. Fixed.
 - **Purple gradients and pill shapes were still in `admin.css`** despite the earlier note. All gradients with purple tones are now solid colours, the decorative dots, blob and waves are hidden, and every pill shaped (999px) label or button is now an 8px rounded rectangle. A global 30px rounded `button` rule was reduced to 8px. Em dashes in `admin.css` and `package.json` removed.
 - **Cursor-following tilt effect removed** from 21 pages (login, register and admin cards).
-- **`my-portfolio.html` retired** (renamed `unused-my-portfolio.html`, excluded in `_config.yml`, "About Vivaan" links removed). It had placeholder projects ("Project 01, Coming soon"), a cursor glow, scramble text, a typing effect, emoji and a "Come back!" tab title. Restore it only after it has real content.
+- **`my-portfolio.html` restored** at the owner's request (About Vivaan links are back in every footer). Note: it still has placeholder projects ("Project 01, Coming soon"), a cursor glow, scramble text and a typing effect; replace those with real content when ready.
 - **Content-Security-Policy added** to `404.html`, `privacy.html`, `terms.html`, `cookies.html` and `refund.html` (they had none).
 - **One unescaped value** in `admin.js` (class section names shown in the classes table) is now escaped.
 - Dead "Notices - Soon" card removed from the teacher dashboard. Duplicate page titles fixed. Close buttons on pop-ups now have a screen reader label. Password show/hide, back links and close buttons now have 44 px touch targets.
