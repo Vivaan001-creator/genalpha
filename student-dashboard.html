@@ -239,11 +239,6 @@
       </div>
     </div>
 
-    <div class="streak-row">
-      <div class="streak-chip"><div class="num" id="dashAttendanceStreak">-</div><div class="lbl">Attendance</div></div>
-      <div class="streak-chip"><div class="num" id="dashLastLoginStreak">-</div><div class="lbl">Last Login</div></div>
-    </div>
-
     <!-- Student switcher (hidden automatically if no other student shares this mobile number) -->
     <div class="child-switch-row" id="child-switch-section" style="display:none;">
       <div id="childSwitchRow" style="display:flex; gap:8px;"></div>
@@ -366,30 +361,6 @@
 
 <script type="module" src="student.js"></script>
 <script>
-  // student.js writes attendance % / last-login into #dashAttendance and
-  // #dashLastLogin (legacy field IDs from the old layout). This build's
-  // header shows those same two facts as colourful "streak chips" instead -
-  // so we keep the two original elements as hidden nodes (student.js still
-  // finds and fills them) and mirror whatever they receive into the chips.
-  (function () {
-    const streakAtt = document.getElementById('dashAttendanceStreak');
-    const streakLogin = document.getElementById('dashLastLoginStreak');
-
-    const attHidden = document.createElement('span');
-    attHidden.id = 'dashAttendance';
-    attHidden.hidden = true;
-    document.body.appendChild(attHidden);
-    new MutationObserver(() => { if (streakAtt) streakAtt.textContent = attHidden.textContent || '-'; })
-      .observe(attHidden, { childList: true, characterData: true, subtree: true });
-
-    const loginHidden = document.createElement('span');
-    loginHidden.id = 'dashLastLogin';
-    loginHidden.hidden = true;
-    document.body.appendChild(loginHidden);
-    new MutationObserver(() => { if (streakLogin) streakLogin.textContent = loginHidden.textContent || '-'; })
-      .observe(loginHidden, { childList: true, characterData: true, subtree: true });
-  })();
-
   function viewMyResult() {
     const monthSelect = document.getElementById('resultMonth');
     const month = monthSelect && monthSelect.value;
