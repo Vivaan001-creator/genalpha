@@ -10,6 +10,7 @@
       '.ps-native{position:absolute!important;opacity:0;pointer-events:none;width:1px!important;height:1px!important;min-width:0!important;margin:0!important;padding:0!important;border:0!important}' +
       '.ps-btn{width:100%;display:flex;align-items:center;gap:8px;text-align:left;padding:12px 38px 12px 14px;border-radius:14px;border:1.5px solid var(--input-border,var(--ep-line,rgba(127,127,127,.35)));background:var(--input-bg,var(--ep-field,rgba(127,127,127,.12)));color:var(--ink,var(--ep-ink,inherit));font:500 14px Inter,system-ui,sans-serif;cursor:pointer;min-height:46px;position:relative;box-sizing:border-box;transition:border-color .2s,box-shadow .2s}' +
       '.ps-btn:hover,.ps-btn:focus-visible,.ps-btn.open{border-color:#ffb347;box-shadow:0 0 0 4px rgba(255,179,71,.18);outline:none}' +
+      '.ps-txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ps-btn{min-width:120px}' +
       '.ps-btn::after{content:"";position:absolute;right:15px;top:50%;width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-70%) rotate(45deg);opacity:.6;pointer-events:none}' +
       '.ps-btn.has-icon{padding-left:38px}.input-wrap .select-chevron{display:none}' +
       '.ps-btn .ps-ph{color:var(--ink-soft,#aab0d4);opacity:.85}' +
@@ -35,19 +36,22 @@
     if (!sel || sel.dataset.psDone) return; sel.dataset.psDone = '1'; css();
     opts = opts || {};
     var wrap = sel.parentNode, btn = document.createElement('button');
+    var w0 = sel.offsetWidth, pw = wrap.offsetWidth, cs = getComputedStyle(sel), fs = cs.fontSize, fl = cs.flex;
     btn.type = 'button'; btn.className = 'ps-btn';
     btn.setAttribute('aria-haspopup', 'dialog');
     sel.classList.add('ps-native'); sel.tabIndex = -1; sel.setAttribute('aria-hidden', 'true');
-    var w0 = sel.offsetWidth, pw = wrap.offsetWidth, cs = getComputedStyle(sel);
     if (wrap.querySelector('.input-icon')) btn.classList.add('has-icon');
     if (wrap.querySelector('.select-chevron')) btn.classList.add('no-chev'), btn.style.setProperty('--x', '1');
-    if (w0 && pw && pw - w0 > 8) { btn.style.width = w0 + 'px'; btn.style.flex = cs.flex; }
-    if (cs.fontSize) btn.style.fontSize = cs.fontSize;
+    if (w0 && pw && pw - w0 > 8) { btn.style.width = w0 + 'px'; btn.style.flex = fl; }
+    if (fs) btn.style.fontSize = fs;
+    Array.prototype.forEach.call(wrap.children, function (c) { if (c !== sel && c !== btn && /chevron|angle-down|caret-down/.test(c.className || '')) c.style.display = 'none'; });
     wrap.insertBefore(btn, sel.nextSibling);
     function label() {
       var o = sel.options[sel.selectedIndex];
-      if (!o || !o.value) btn.innerHTML = '<span class="ps-ph"></span>', btn.firstChild.textContent = (sel.options[0] && sel.options[0].text) || 'Select';
-      else btn.textContent = o.text;
+      var sp = document.createElement('span'); sp.className = 'ps-txt';
+      if (!o || !o.value) { sp.classList.add('ps-ph'); sp.textContent = (sel.options[0] && sel.options[0].text) || 'Select'; }
+      else sp.textContent = o.text;
+      btn.textContent = ''; btn.appendChild(sp);
     }
     label(); sel.addEventListener('change', label);
     // keep label right when page scripts set .value / .selectedIndex or rebuild options
