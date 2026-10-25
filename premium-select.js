@@ -7,9 +7,11 @@
     if (document.getElementById('ps-styles')) return;
     var s = document.createElement('style'); s.id = 'ps-styles';
     s.textContent =
-      '.ps-native{position:absolute!important;inset:0;opacity:0;pointer-events:none;width:100%;height:100%}' +
-      '.ps-btn{width:100%;display:flex;align-items:center;gap:8px;text-align:left;padding:13px 40px 13px 38px;border-radius:14px;border:1.5px solid var(--input-border,rgba(255,255,255,.14));background:var(--input-bg,rgba(255,255,255,.05));color:var(--ink,#f3ecd9);font:500 14px Inter,system-ui,sans-serif;cursor:pointer;min-height:48px;transition:border-color .2s,box-shadow .2s}' +
+      '.ps-native{position:absolute!important;opacity:0;pointer-events:none;width:1px!important;height:1px!important;min-width:0!important;margin:0!important;padding:0!important;border:0!important}' +
+      '.ps-btn{width:100%;display:flex;align-items:center;gap:8px;text-align:left;padding:12px 38px 12px 14px;border-radius:14px;border:1.5px solid var(--input-border,var(--ep-line,rgba(127,127,127,.35)));background:var(--input-bg,var(--ep-field,rgba(127,127,127,.12)));color:var(--ink,var(--ep-ink,inherit));font:500 14px Inter,system-ui,sans-serif;cursor:pointer;min-height:46px;position:relative;box-sizing:border-box;transition:border-color .2s,box-shadow .2s}' +
       '.ps-btn:hover,.ps-btn:focus-visible,.ps-btn.open{border-color:#ffb347;box-shadow:0 0 0 4px rgba(255,179,71,.18);outline:none}' +
+      '.ps-btn::after{content:"";position:absolute;right:15px;top:50%;width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-70%) rotate(45deg);opacity:.6;pointer-events:none}' +
+      '.ps-btn.has-icon{padding-left:38px}.input-wrap .select-chevron{display:none}' +
       '.ps-btn .ps-ph{color:var(--ink-soft,#aab0d4);opacity:.85}' +
       '.ps-back{position:fixed;inset:0;z-index:2147483000;background:rgba(6,9,22,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .22s}' +
       '.ps-back.show{opacity:1}' +
@@ -36,6 +38,11 @@
     btn.type = 'button'; btn.className = 'ps-btn';
     btn.setAttribute('aria-haspopup', 'dialog');
     sel.classList.add('ps-native'); sel.tabIndex = -1; sel.setAttribute('aria-hidden', 'true');
+    var w0 = sel.offsetWidth, pw = wrap.offsetWidth, cs = getComputedStyle(sel);
+    if (wrap.querySelector('.input-icon')) btn.classList.add('has-icon');
+    if (wrap.querySelector('.select-chevron')) btn.classList.add('no-chev'), btn.style.setProperty('--x', '1');
+    if (w0 && pw && pw - w0 > 8) { btn.style.width = w0 + 'px'; btn.style.flex = cs.flex; }
+    if (cs.fontSize) btn.style.fontSize = cs.fontSize;
     wrap.insertBefore(btn, sel.nextSibling);
     function label() {
       var o = sel.options[sel.selectedIndex];
@@ -43,6 +50,12 @@
       else btn.textContent = o.text;
     }
     label(); sel.addEventListener('change', label);
+    // keep label right when page scripts set .value / .selectedIndex or rebuild options
+    ['value', 'selectedIndex'].forEach(function (k) {
+      var d = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, k);
+      if (d && d.set) Object.defineProperty(sel, k, { configurable: true, get: function () { return d.get.call(this); }, set: function (v) { d.set.call(this, v); label(); } });
+    });
+    new MutationObserver(label).observe(sel, { childList: true, subtree: true, attributes: true });
     function open() {
       var back = document.createElement('div'); back.className = 'ps-back';
       var sheet = document.createElement('div'); sheet.className = 'ps-sheet';
@@ -72,5 +85,15 @@
     }
     btn.addEventListener('click', open);
   }
-  window.PremiumSelect = { enhance: enhance };
+  function auto() {
+    document.querySelectorAll('select').forEach(function (sel) {
+      if (sel.multiple || sel.size > 1 || sel.dataset.psDone || sel.dataset.monthPickerEnhanced || sel.hasAttribute('data-ps-skip')) return;
+      if (sel.hidden || getComputedStyle(sel).display === 'none') return;
+      enhance(sel);
+    });
+  }
+  var t; function later() { clearTimeout(t); t = setTimeout(auto, 60); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', auto); else auto();
+  new MutationObserver(later).observe(document.documentElement, { childList: true, subtree: true });
+  window.PremiumSelect = { enhance: enhance, auto: auto };
 })();
