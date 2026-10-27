@@ -15,7 +15,7 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Design a Test - GenAlpha</title>
-<meta name="description" content="Design multiple choice questions, set time and marks, and publish.">
+<meta name="description" content="Design multiple choice questions for one class and section, set time and marks, and publish.">
 <meta name="theme-color" content="#0e1326">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -53,6 +53,8 @@
         <input type="text" id="f_title" maxlength="80" placeholder="For example: Chapter 3 quiz" aria-describedby="e_title"><p class="ep-error" id="e_title" role="alert"></p></div>
       <div class="ep-field" id="w_class"><label for="f_class">Class <span class="req" aria-hidden="true">*</span></label>
         <select id="f_class" required aria-describedby="e_class"></select><p class="ep-error" id="e_class" role="alert"></p></div>
+      <div class="ep-field" id="w_section"><label for="f_section">Section <span class="req" aria-hidden="true">*</span></label>
+        <select id="f_section" required aria-describedby="e_section"><option value="">Choose the class first</option></select><p class="ep-help">Every section has its own paper. Only students of this class and section will see this test.</p><p class="ep-error" id="e_section" role="alert"></p></div>
       <div class="te-grid">
         <div class="ep-field" id="w_hours"><label for="f_hours">Time: hours</label>
           <input type="number" id="f_hours" min="0" max="5" step="1" value="1" inputmode="numeric" aria-describedby="e_hours"><p class="ep-error" id="e_hours" role="alert"></p></div>

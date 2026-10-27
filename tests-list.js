@@ -3,7 +3,7 @@
 import { db } from "./Firebase.js";
 import { collection, doc, getDoc, getDocs, query, where }
   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { tsMs, fmtCountdown, fmtDateTime, gradeAnswers, openState, testCardHTML, attemptId } from "./tests-common.js";
+import { tsMs, fmtCountdown, fmtDateTime, gradeAnswers, openState, testCardHTML, attemptId, sameSection } from "./tests-common.js";
 
 function stateOf(item, now) {
   if (item.sub) return "done";
@@ -36,10 +36,12 @@ function info(item, state, now, mode, roll) {
 
 const ORDER = { inprogress: 0, live: 0, upcoming: 1, done: 2, missed: 3, closed: 3 };
 
-export async function startList({ host, emptyEl, roll, cls, mode }) {
+export async function startList({ host, emptyEl, roll, cls, section, mode }) {
   const snap = await getDocs(query(collection(db, "tests"), where("class", "==", cls), where("status", "==", "published")));
   const items = [];
-  for (const d of snap.docs) {
+  // A test is made for one section. Older tests have no section and are shown to the whole class.
+  const mine = snap.docs.filter((d) => !d.data().section || sameSection(d.data().section, section));
+  for (const d of mine) {
     const id = d.id, aid = attemptId(id, roll);
     const sSnap = await getDoc(doc(db, "testSubmissions", aid));
     const sub = sSnap.exists() ? sSnap.data() : null;

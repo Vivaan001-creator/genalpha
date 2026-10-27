@@ -6,6 +6,12 @@ export const tsMs = (v) => (v && typeof v.toMillis === "function" ? v.toMillis()
 export const LETTERS = ["A", "B", "C", "D"];
 export const attemptId = (testId, roll) => testId + "_" + roll;
 
+// ---------- Section ----------
+// A test is made for one class AND one section. Older tests have no section and stay visible to the whole class.
+export const sameSection = (a, b) => String(a || "").trim().toUpperCase() === String(b || "").trim().toUpperCase();
+export const testIsForStudent = (test, student) => !!test && !!student && test.class === student.class && (!test.section || sameSection(test.section, student.section));
+export const classLabel = (t) => "Class " + (t.class || "-") + (t.section ? " \u00b7 Section " + t.section : "");
+
 export function fmtDuration(minutes) {
   const m = Math.max(0, Math.round(Number(minutes) || 0));
   const h = Math.floor(m / 60), r = m % 60;
