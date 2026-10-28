@@ -51,7 +51,7 @@ export async function startList({ host, emptyEl, roll, cls, section, mode }) {
     else if (mode === "student") { const a = await getDoc(doc(db, "testAttempts", aid)); if (a.exists()) attempt = a.data(); }
     // A student who missed the test may have been given a new time by the teacher.
     let test = d.data();
-    if (!sub) { try { const r = await getDoc(doc(db, "testReschedules", aid)); if (r.exists()) test = withReschedule(test, r.data()); } catch (e) { /* none set */ } }
+    if (!sub) { try { const r = await getDoc(doc(db, "testReschedules", aid)); if (r.exists()) test = withReschedule(test, r.data()); } catch (e) { console.warn("Could not check for a new test time. Are the latest Firestore rules published?", e); } }
     items.push({ id, test, sub, key, attempt });
   }
   let states = [];

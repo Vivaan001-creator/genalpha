@@ -3,9 +3,9 @@
 // 2) Makes every page open instantly: pages, scripts, styles, images, fonts and the
 //    Firebase SDK are served from the phone's cache first, then refreshed quietly in
 //    the background (stale-while-revalidate). A change you upload shows up the next
-//    time the page is opened after that (code files check the network first). Live data (Firestore, login, whats-new.json)
+//    time the page is opened after that. Live data (Firestore, login, whats-new.json)
 //    is never cached, so results, fees, notices and update alerts stay fresh.
-const CACHE = "genalpha-v2";
+const CACHE = "genalpha-v2";   // change this number whenever you upload new files, so phones drop the old copies at once
 const NEVER = [/whats-new\.json/, /firestore\.googleapis\.com/, /identitytoolkit/, /securetoken/, /firebasestorage/, /firebaseio\.com/];
 const CDN_OK = ["www.gstatic.com", "cdnjs.cloudflare.com", "fonts.googleapis.com", "fonts.gstatic.com"];
 
@@ -27,26 +27,9 @@ self.addEventListener("fetch", (event) => {
   if (NEVER.some((re) => re.test(req.url))) return;
   const sameOrigin = url.origin === self.location.origin;
   if (!sameOrigin && !CDN_OK.includes(url.hostname)) return;
-  // Your own pages, scripts and styles: ask the network first (so an update you upload shows up
-  // immediately), but if the network is slow (1.5s) or offline, open the saved copy instantly.
-  const isCode = sameOrigin && (req.mode === "navigate" || /\.(html|js|css|json)$/.test(url.pathname) || url.pathname.endsWith("/"));
-  if (isCode) {
-    event.respondWith(caches.open(CACHE).then((cache) => {
-      const net = fetch(req).then((res) => {
-        if (res && res.ok) cache.put(req, res.clone()).catch(() => {});
-        return res;
-      });
-      const timeout = new Promise((resolve) => setTimeout(resolve, 1500, null));
-      return cache.match(req).then((hit) =>
-        Promise.race([net.catch(() => null), hit ? timeout : new Promise(() => {})]).then((res) => res || hit || net)
-      );
-    }));
-    return;
-  }
-  // Images, fonts, Firebase SDK, icons: saved copy first, refreshed quietly in the background.
   event.respondWith(
     caches.open(CACHE).then((cache) =>
-      cache.match(req).then((hit) => {
+      cache.match(req, { ignoreSearch: false }).then((hit) => {
         const refresh = fetch(req).then((res) => {
           if (res && (res.ok || res.type === "opaque")) cache.put(req, res.clone()).catch(() => {});
           return res;
