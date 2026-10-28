@@ -59,6 +59,12 @@ export function openState(test, now) {
   return "live";
 }
 
+// A teacher can give a student who missed the test a new time window (testReschedules/{testId}_{roll}).
+// The questions and the time limit stay the same. Pass the test and that student's reschedule (or null).
+export function withReschedule(test, r) {
+  return r && r.startAt && r.endAt ? { ...test, startAt: r.startAt, endAt: r.endAt, rescheduled: true } : test;
+}
+
 const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
 
 // One test card. Subject in bold, then time and marks in small text, an arrow on the right.

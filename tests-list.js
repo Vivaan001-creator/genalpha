@@ -3,7 +3,7 @@
 import { db } from "./Firebase.js";
 import { collection, doc, getDoc, getDocs, query, where }
   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { tsMs, fmtCountdown, fmtDateTime, gradeAnswers, openState, testCardHTML, attemptId, sameSection } from "./tests-common.js";
+import { tsMs, fmtCountdown, fmtDateTime, gradeAnswers, openState, testCardHTML, attemptId, sameSection, withReschedule } from "./tests-common.js";
 
 function stateOf(item, now) {
   if (item.sub) return "done";
@@ -20,9 +20,10 @@ function stateOf(item, now) {
 function info(item, state, now, mode, roll) {
   const t = item.test;
   const base = { id: item.id, label: (t.subject || "Test") + " test" };
-  if (state === "upcoming") return { ...base, canGo: false, statusClass: "", statusText: "Starts in " + fmtCountdown(tsMs(t.startAt) - now) };
+  const rs = t.rescheduled ? "Rescheduled for you. " : "";
+  if (state === "upcoming") return { ...base, canGo: false, statusClass: "", statusText: rs + "Starts in " + fmtCountdown(tsMs(t.startAt) - now) };
   if (state === "live") return { ...base, canGo: mode === "student", href: "take-test.html?id=" + encodeURIComponent(item.id), statusClass: "live",
-    statusText: mode === "student" ? "Open now. Tap the arrow to start. Last time to start " + fmtDateTime(tsMs(t.endAt)) : "Open now. Your child can start it from their own login." };
+    statusText: rs + (mode === "student" ? "Open now. Tap the arrow to start. Last time to start " + fmtDateTime(tsMs(t.endAt)) : "Open now. Your child can start it from their own login.") };
   if (state === "inprogress") return { ...base, canGo: mode === "student", href: "take-test.html?id=" + encodeURIComponent(item.id), statusClass: "live",
     statusText: mode === "student" ? "In progress. Tap the arrow to continue. You will verify again." : "In progress." };
   if (state === "done") {
@@ -48,7 +49,10 @@ export async function startList({ host, emptyEl, roll, cls, section, mode }) {
     let key = null, attempt = null;
     if (sub) { try { const k = await getDoc(doc(db, "testKeys", aid)); if (k.exists()) key = k.data().answers; } catch (e) { /* key not ready */ } }
     else if (mode === "student") { const a = await getDoc(doc(db, "testAttempts", aid)); if (a.exists()) attempt = a.data(); }
-    items.push({ id, test: d.data(), sub, key, attempt });
+    // A student who missed the test may have been given a new time by the teacher.
+    let test = d.data();
+    if (!sub) { try { const r = await getDoc(doc(db, "testReschedules", aid)); if (r.exists()) test = withReschedule(test, r.data()); } catch (e) { /* none set */ } }
+    items.push({ id, test, sub, key, attempt });
   }
   let states = [];
   const render = () => {
@@ -66,7 +70,7 @@ export async function startList({ host, emptyEl, roll, cls, section, mode }) {
     items.forEach((it, i) => {
       if (states[i] !== "upcoming") return;
       const el = host.querySelector('[data-test="' + CSS.escape(it.id) + '"] [data-status]');
-      if (el) el.textContent = "Starts in " + fmtCountdown(tsMs(it.test.startAt) - now);
+      if (el) el.textContent = (it.test.rescheduled ? "Rescheduled for you. " : "") + "Starts in " + fmtCountdown(tsMs(it.test.startAt) - now);
     });
   }, 1000);
 }

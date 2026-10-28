@@ -175,6 +175,7 @@ service cloud.firestore {
     //                               student has submitted (a submission with the same id exists).
     //   testAttempts/{id}_{roll}    created once when the student starts. Holds the start time
     //                               (server time), so leaving and returning cannot reset the clock.
+    //   testReschedules/{id}_{roll} a new start window the teacher gives one student who missed the test.
     //   testSubmissions/{id}_{roll} created once on submit. Cannot be changed afterwards.
     function testData(id) {
       return get(/databases/$(database)/documents/tests/$(id)).data;
@@ -219,8 +220,12 @@ service cloud.firestore {
           && request.resource.data.startedAt == request.time
           && request.resource.data.violations == 0
           && testData(request.resource.data.testId).status == 'published'
-          && request.time >= testData(request.resource.data.testId).startAt
-          && request.time <= testData(request.resource.data.testId).endAt
+          // Open in the test's own time, or in the new time the teacher gave this student (testReschedules).
+          && ((request.time >= testData(request.resource.data.testId).startAt
+                && request.time <= testData(request.resource.data.testId).endAt)
+              || (exists(/databases/$(database)/documents/testReschedules/$(attemptId))
+                  && request.time >= get(/databases/$(database)/documents/testReschedules/$(attemptId)).data.startAt
+                  && request.time <= get(/databases/$(database)/documents/testReschedules/$(attemptId)).data.endAt))
           // A test made for one section can be started only by a student of that section.
           // (Older tests have no section and stay open to the whole class.)
           && (testData(request.resource.data.testId).get('section', '') == ''
@@ -231,6 +236,23 @@ service cloud.firestore {
           && request.resource.data.violations == resource.data.violations + 1
           && !exists(/databases/$(database)/documents/testSubmissions/$(attemptId));
       allow delete: if isStaff();
+    }
+
+    // A new time for one student who missed the test. Same questions, same time limit.
+    // Students can read their own (the id is test + roll). Only the teacher who owns the test can write.
+    match /testReschedules/{rid} {
+      allow get: if true;
+      allow list: if isStaff();
+      allow create, update: if request.resource.data.keys().hasOnly(['testId', 'roll', 'startAt', 'endAt', 'updatedAt'])
+          && request.resource.data.testId is string
+          && request.resource.data.roll is string
+          && rid == request.resource.data.testId + '_' + request.resource.data.roll
+          && request.resource.data.startAt is timestamp
+          && request.resource.data.endAt is timestamp
+          && request.resource.data.endAt >= request.resource.data.startAt
+          && request.resource.data.updatedAt == request.time
+          && ownsTest(request.resource.data.testId);
+      allow delete: if ownsTest(resource.data.testId);
     }
 
     match /testSubmissions/{submissionId} {
