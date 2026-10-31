@@ -158,14 +158,17 @@ async function save(publish) {
 }
 
 // ---------- sections ----------
-// Sections come from the class (the admin sets them in Classes). If a class has none set, the sections its students actually have are used.
+// Only sections that really have students in this class are listed. If the class has no students yet,
+// the sections set for it on the Classes page are used instead.
+const sectionCache = {};
 async function sectionsFor(cls) {
-  if (classSections[cls] && classSections[cls].length) return classSections[cls];
-  const st = await getDocs(query(collection(db, "students"), where("class", "==", cls)));
+  if (sectionCache[cls]) return sectionCache[cls];
   const seen = new Map();
-  st.forEach((d) => { const s = String(d.data().section || "").trim(); if (s) seen.set(s.toUpperCase(), s); });
-  classSections[cls] = [...seen.values()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  return classSections[cls];
+  const st = await getDocs(query(collection(db, "students"), where("class", "==", cls)));
+  st.forEach((d) => { const s = String(d.data().section || "").trim(); if (s && !seen.has(s.toUpperCase())) seen.set(s.toUpperCase(), s); });
+  if (!seen.size) (classSections[cls] || []).forEach((s) => seen.set(s.toUpperCase(), s));
+  sectionCache[cls] = [...seen.values()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  return sectionCache[cls];
 }
 
 async function fillSections(cls, selected) {
