@@ -5,7 +5,7 @@
 //    the background (stale-while-revalidate). A change you upload shows up the next
 //    time the page is opened after that. Live data (Firestore, login, whats-new.json)
 //    is never cached, so results, fees, notices and update alerts stay fresh.
-const CACHE = "genalpha-v2";   // change this number whenever you upload new files, so phones drop the old copies at once
+const CACHE = "genalpha-v3";   // change this number whenever you upload new files, so phones drop the old copies at once
 const NEVER = [/whats-new\.json/, /firestore\.googleapis\.com/, /identitytoolkit/, /securetoken/, /firebasestorage/, /firebaseio\.com/];
 const CDN_OK = ["www.gstatic.com", "cdnjs.cloudflare.com", "fonts.googleapis.com", "fonts.gstatic.com"];
 
@@ -30,7 +30,10 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.open(CACHE).then((cache) =>
       cache.match(req, { ignoreSearch: false }).then((hit) => {
-        const refresh = fetch(req).then((res) => {
+        // Scripts, styles and data of this site are always checked with the server, so a file you upload is not
+        // hidden for minutes behind the browser's own copy. (Pages themselves are left as they were.)
+        const fresh = sameOrigin && req.mode !== "navigate" ? fetch(req, { cache: "no-cache" }) : fetch(req);
+        const refresh = fresh.then((res) => {
           if (res && (res.ok || res.type === "opaque")) cache.put(req, res.clone()).catch(() => {});
           return res;
         }).catch(() => hit);
